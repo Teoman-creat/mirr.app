@@ -32,14 +32,42 @@ export default function UploadPage() {
     }
   }, [searchParams, router, locale]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
+      // Compress image to avoid Vercel's 4.5MB serverless payload limit
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              let { width, height } = img;
+              const maxSize = 800; // Optimal size for Gemini Vision
+
+              if (width > height && width > maxSize) {
+                height *= maxSize / width;
+                width = maxSize;
+              } else if (height > maxSize) {
+                width *= maxSize / height;
+                height = maxSize;
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              ctx?.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL("image/jpeg", 0.8)); // 80% quality JPEG
+            };
+            img.src = event.target?.result as string;
+          };
+          reader.readAsDataURL(file);
+        });
       };
-      reader.readAsDataURL(file);
+
+      const compressedDataUrl = await compressImage(file);
+      setSelectedImage(compressedDataUrl);
     }
   };
 
