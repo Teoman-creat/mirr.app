@@ -1,0 +1,88 @@
+{
+  "Home": {
+    "title": "Mirr'a Hoş Geldiniz",
+    "subtitle": "Senin aynan. Senin stilin. Senin gerçeğin.",
+    "description": "Eşsiz estetiğinize ve vücut tipinize göre özel olarak tasarlanmış birinci sınıf yapay zeka stilistiniz.",
+    "analyze_btn": "Görünümümü Analiz Et",
+    "nav_inspo": "İlham",
+    "nav_profile": "Profil"
+  },
+  "Login": {
+    "title": "Mirr'a Hoş Geldiniz",
+    "subtitle": "Stil DNA'nızın kilidini açın.",
+    "email_label": "E-posta",
+    "email_placeholder": "E-posta adresinizi girin",
+    "continue_btn": "Devam Et",
+    "or": "VEYA"
+  },
+  "Upload": {
+    "title": "Yeni Görünüm",
+    "take_photo": "Fotoğraf Çek",
+    "instruction": "Kıyafetinizin tamamının iyi bir ışıkta göründüğünden emin olun.",
+    "gallery": "Galeri",
+    "analyze_btn": "Stil DNA'sını İncele",
+    "style_goal_label": "Stil Hedefi (Opsiyonel)",
+    "style_goal_placeholder": "Örn: İş görüşmesi, ilk buluşma, günlük..."
+  },
+  "Analyze": {
+    "title": "Analiz Ediliyor",
+    "step1": "Renk paleti çıkarılıyor...",
+    "step2": "Silüet değerlendiriliyor...",
+    "step3": "Stil DNA'sı karşılaştırılıyor...",
+    "step4": "Aura Puanı hesaplanıyor..."
+  },
+  "Result": {
+    "title": "Analiz Tamamlandı",
+    "score_label": "Aura Puanı",
+    "vibe_label": "Tespit Edilen Vibe",
+    "strengths_title": "Güçlü Yönler",
+    "improvements_title": "Geliştirilebilecekler",
+    "save_btn": "My Mirr'a Kaydet",
+    "save_desc": "Dijital gardırobuna ekle",
+    "mock_vibe": "Karanlık Akademi tarzı ile Sokak Modası birleşimi",
+    "mock_strength_1": "Kusursuz bir şekilde tasarlanmış silüet",
+    "mock_strength_2": "Cesur monokromatik palet",
+    "mock_strength_3": "Mükemmel vücut orantıları oyunu",
+    "mock_improvement_1": "Dikkat çekici bir saat/mücevher eklemeyi düşünebilirsin",
+    "mock_improvement_2": "Yapısal bir ceket bu kombini daha da yukarı taşıyabilir"
+  },
+  "Onboarding": {
+    "q1_question": "Temel stil hedefiniz nedir?",
+    "q1_opt1": "Daha profesyonel görünmek",
+    "q1_opt2": "Kendime has tarzımı bulmak",
+    "q1_opt3": "Günlük tarzımı bir üst seviyeye taşımak",
+    "q1_opt4": "Özel bir etkinliğe hazırlanmak",
+    "q2_question": "Size en çok hangi vibe (hava) hitap ediyor?",
+    "q2_opt1": "Minimalist ve Sade",
+    "q2_opt2": "Sokak Modası ve Cesur",
+    "q2_opt3": "Klasik ve Zamansız",
+    "q2_opt4": "Sıradışı ve Deneysel",
+    "q3_question": "Tercih ettiğiniz renk paleti nedir?",
+    "q3_opt1": "Siyaha Dair Her Şey",
+    "q3_opt2": "Toprak Tonları ve Doğal",
+    "q3_opt3": "Canlı ve Dikkat Çekici",
+    "q3_opt4": "Pastel ve Yumuşak Tonlar"
+  },
+  "Profile": {
+    "title": "My Mirr",
+    "tabs_wardrobe": "Gardırop",
+    "tabs_evolution": "Gelişim",
+    "tabs_grooming": "Bakım",
+    "aura_score": "Ort. Aura Puanı",
+    "saved_looks": "Kaydedilenler",
+    "style_dna": "Stil DNA",
+    "recent_outfits": "Son Kıyafetler",
+    "analyze_new": "Yeni Görünüm Analiz Et"
+  },
+  "Community": {
+    "title": "Topluluk Lensi",
+    "rate_btn_fire": "Ateş!",
+    "rate_btn_meh": "İdare Eder",
+    "rate_btn_notes": "Not Bırak",
+    "leave_note_placeholder": "Anonim bir stil tavsiyesi bırak...",
+    "submit_note": "Gönder",
+    "toggle_feed": "Akış",
+    "toggle_leaderboard": "En İyiler",
+    "no_more_profiles": "Herkesi oyladın!"
+  }
+}

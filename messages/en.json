@@ -1,0 +1,88 @@
+{
+  "Home": {
+    "title": "Welcome to Mirr",
+    "subtitle": "Your mirror. Your style. Your truth.",
+    "description": "World-class AI styling tailored exactly to your unique aesthetic and body type.",
+    "analyze_btn": "Analyze My Look",
+    "nav_inspo": "Inspo",
+    "nav_profile": "Profile"
+  },
+  "Login": {
+    "title": "Welcome to Mirr",
+    "subtitle": "Unlock your Style DNA.",
+    "email_label": "Email",
+    "email_placeholder": "Enter your email",
+    "continue_btn": "Continue",
+    "or": "OR"
+  },
+  "Upload": {
+    "title": "New Look",
+    "take_photo": "Take a photo",
+    "instruction": "Ensure your full outfit is visible with good lighting.",
+    "gallery": "Gallery",
+    "analyze_btn": "Analyze Style DNA",
+    "style_goal_label": "Styling Goal (Optional)",
+    "style_goal_placeholder": "e.g., Job interview, first date..."
+  },
+  "Analyze": {
+    "title": "Analyzing",
+    "step1": "Extracting color palette...",
+    "step2": "Evaluating silhouette...",
+    "step3": "Cross-referencing style DNA...",
+    "step4": "Calculating Aura Score..."
+  },
+  "Result": {
+    "title": "Analysis Complete",
+    "score_label": "Aura Score",
+    "vibe_label": "Detected Vibe",
+    "strengths_title": "What's Working",
+    "improvements_title": "Elevate It",
+    "save_btn": "Save to My Mirr",
+    "save_desc": "Add to your digital wardrobe",
+    "mock_vibe": "Dark Academia meets Streetwear",
+    "mock_strength_1": "Perfectly tailored silhouette",
+    "mock_strength_2": "Bold monochromatic palette",
+    "mock_strength_3": "Excellent proportion play",
+    "mock_improvement_1": "Consider adding a statement watch/jewelry",
+    "mock_improvement_2": "A structured jacket could elevate this further"
+  },
+  "Onboarding": {
+    "q1_question": "What is your main style objective?",
+    "q1_opt1": "Look more professional",
+    "q1_opt2": "Find my unique edge",
+    "q1_opt3": "Upgrade everyday casual",
+    "q1_opt4": "Prepare for a big event",
+    "q2_question": "Which vibe resonates with you most?",
+    "q2_opt1": "Minimalist & Clean",
+    "q2_opt2": "Streetwear & Bold",
+    "q2_opt3": "Classic & Timeless",
+    "q2_opt4": "Avant-Garde & Experimental",
+    "q3_question": "What's your preferred color palette?",
+    "q3_opt1": "All Black Everything",
+    "q3_opt2": "Earthy & Neutral",
+    "q3_opt3": "Bright & Loud",
+    "q3_opt4": "Pastels & Soft Tones"
+  },
+  "Profile": {
+    "title": "My Mirr",
+    "tabs_wardrobe": "Wardrobe",
+    "tabs_evolution": "Evolution",
+    "tabs_grooming": "Grooming",
+    "aura_score": "Avg Aura Score",
+    "saved_looks": "Saved Looks",
+    "style_dna": "Style DNA",
+    "recent_outfits": "Recent Outfits",
+    "analyze_new": "Analyze New Look"
+  },
+  "Community": {
+    "title": "Community Lens",
+    "rate_btn_fire": "Fire",
+    "rate_btn_meh": "Meh",
+    "rate_btn_notes": "Notes",
+    "leave_note_placeholder": "Leave an anonymous style tip...",
+    "submit_note": "Send",
+    "toggle_feed": "Feed",
+    "toggle_leaderboard": "Top Rated",
+    "no_more_profiles": "You've rated everyone!"
+  }
+}
