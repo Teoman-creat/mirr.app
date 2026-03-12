@@ -27,9 +27,9 @@ ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel '
 
 Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
 
-    // We use gemini-2.5-flash since gemini-1.5-flash is not supported on this project
+    // We use gemini-2.0-flash since gemini-1.5-flash is not supported on this project
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash",
         systemInstruction,
         generationConfig: {
             temperature: 0.8,
@@ -92,19 +92,50 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
         
         if (user) {
             const parsedData = JSON.parse(responseText);
-            const { error: dbError } = await supabase.from('analyses').insert({
-                user_id: user.id,
-                style_goal: styleGoal || null,
-                aura_score: parsedData.auraScore,
-                vibe: parsedData.vibe,
-                strengths: parsedData.strengths,
-                improvements: parsedData.improvements
-            });
-            if (dbError) {
-                console.error("Error saving to database:", dbError);
-                // Do not throw, we still want to return the result to the user even if saving failed
+            let imageUrl = '';
+
+            try {
+                // Upload image to Storage
+                const fileName = `${user.id}/${Date.now()}.${mimeType.split('/')[1] || 'jpeg'}`;
+                const buffer = Buffer.from(base64Data, 'base64');
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('analyses')
+                    .upload(fileName, buffer, {
+                        contentType: mimeType,
+                        upsert: false
+                    });
+
+                if (uploadError) {
+                    console.error("Error uploading image to storage:", uploadError);
+                } else {
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('analyses')
+                        .getPublicUrl(fileName);
+                    imageUrl = publicUrl;
+                }
+            } catch (err) {
+                console.error("Exception uploading to storage:", err);
+            }
+
+            if (imageUrl) {
+                const { error: dbError } = await supabase.from('analyses').insert({
+                    user_id: user.id,
+                    image_url: imageUrl,
+                    type: "OUTFIT",
+                    aura_score: parsedData.auraScore,
+                    strengths: parsedData.strengths,
+                    improvements: parsedData.improvements,
+                    raw_ai_response: parsedData
+                });
+                
+                if (dbError) {
+                    console.error("Error saving to database:", dbError);
+                } else {
+                    console.log("Analysis successfully saved to database.");
+                }
             } else {
-                console.log("Analysis successfully saved to database.");
+                console.log("Skipping database save because image upload failed.");
             }
         } else {
             console.log("No authenticated user found, skipping database save.");

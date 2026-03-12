@@ -1,21 +1,73 @@
 "use client";
-import React, { useState } from "react";
-import { ArrowLeft, User, Grid, TrendingUp, Scissors, Sparkles, Plus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, User, Grid, TrendingUp, Scissors, Sparkles, Plus, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
+import { createClient } from "@/utils/supabase/client";
 
 export default function ProfilePage() {
   const t = useTranslations("Profile");
   const locale = useLocale();
   const [activeTab, setActiveTab] = useState("wardrobe");
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [stats, setStats] = useState({ averageScore: 0, savedLooks: 0 });
 
-  // Mock Data
-  const mockOutfits = [
-    { id: 1, img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80", score: 87, date: "Today" },
-    { id: 2, img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80", score: 92, date: "2 days ago" },
-    { id: 3, img: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80", score: 78, date: "1 week ago" },
-    { id: 4, img: "https://images.unsplash.com/photo-1434389671024-53c7416347bed?w=400&q=80", score: 85, date: "2 weeks ago" },
-  ];
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Fetch profile details
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          setUserProfile(profileData || { full_name: user.email?.split('@')[0] });
+
+          // Fetch user analyses
+          const { data: analysesData, error } = await supabase
+            .from('analyses')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (!error && analysesData) {
+            setAnalyses(analysesData);
+            setStats({
+              savedLooks: analysesData.length,
+              averageScore: analysesData.length > 0 
+                ? Math.round(analysesData.reduce((acc, curr) => acc + (curr.aura_score || 0), 0) / analysesData.length) 
+                : 0
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfileData();
+  }, []);
+
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    const diffInDays = Math.floor(diffInSeconds / 86400);
+    if (diffInDays === 1) return "Yesterday";
+    if (diffInDays < 30) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-[#F5F0E8] relative overflow-hidden pb-24">
@@ -39,22 +91,29 @@ export default function ProfilePage() {
             <div className="absolute top-[-50%] right-[-10%] w-32 h-32 bg-[#D4AF37]/20 blur-[50px] rounded-full" />
             
             <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#D4AF37]/30 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.15)] shrink-0">
-                    <User size={24} className="text-[#D4AF37]" />
+                <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#D4AF37]/30 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.15)] shrink-0 overflow-hidden">
+                    {userProfile?.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={userProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                        <User size={24} className="text-[#D4AF37]" />
+                    )}
                 </div>
                 <div className="flex-1">
-                    <h2 className="text-xl font-serif text-[#F5F0E8] mb-1">Alex Doe</h2>
-                    <p className="text-xs text-[#D4AF37] uppercase tracking-widest">{t("style_dna")}: Minimalist</p>
+                    <h2 className="text-xl font-serif text-[#F5F0E8] mb-1">
+                      {loading ? "..." : (userProfile?.full_name || userProfile?.username || "Style Icon")}
+                    </h2>
+                    <p className="text-xs text-[#D4AF37] uppercase tracking-widest">{t("style_dna")}: {userProfile?.style_dna?.vibe || "Discovering"}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-[#ffffff]/5">
                 <div className="flex flex-col">
-                    <span className="text-3xl font-serif text-[#F5F0E8]">85</span>
+                    <span className="text-3xl font-serif text-[#F5F0E8]">{loading ? "-" : stats.averageScore}</span>
                     <span className="text-[10px] text-[#C8C8C8]/60 uppercase tracking-wider">{t("aura_score")}</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-3xl font-serif text-[#F5F0E8]">12</span>
+                    <span className="text-3xl font-serif text-[#F5F0E8]">{loading ? "-" : stats.savedLooks}</span>
                     <span className="text-[10px] text-[#C8C8C8]/60 uppercase tracking-wider">{t("saved_looks")}</span>
                 </div>
             </div>
@@ -90,30 +149,36 @@ export default function ProfilePage() {
                         <h3 className="text-sm font-medium tracking-wide text-[#C8C8C8]">{t("recent_outfits")}</h3>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Add New Look Card */}
-                        <Link href={`/${locale}/upload`} className="aspect-[3/4] rounded-2xl border border-dashed border-[#ffffff]/20 bg-[#ffffff]/2 hover:bg-[#ffffff]/5 flex flex-col items-center justify-center gap-3 transition-colors group">
-                            <div className="w-12 h-12 rounded-full bg-[#ffffff]/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Plus size={20} className="text-[#D4AF37]" />
-                            </div>
-                            <span className="text-xs text-[#C8C8C8] font-medium">{t("analyze_new")}</span>
-                        </Link>
-
-                        {/* Outfit Cards */}
-                        {mockOutfits.map((outfit) => (
-                            <div key={outfit.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer border border-[#ffffff]/10 hover:border-[#D4AF37]/50 transition-colors">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={outfit.img} alt="Outfit" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
-                                
-                                <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-                                    <Sparkles size={12} className="text-[#D4AF37]" />
-                                    <span className="text-xs font-bold text-[#F5F0E8]">{outfit.score}</span>
+                    {loading ? (
+                        <div className="py-12 flex justify-center items-center">
+                            <LoaderCircle className="animate-spin text-[#D4AF37]" />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Add New Look Card */}
+                            <Link href={`/${locale}/upload`} className="aspect-[3/4] rounded-2xl border border-dashed border-[#ffffff]/20 bg-[#ffffff]/2 hover:bg-[#ffffff]/5 flex flex-col items-center justify-center gap-3 transition-colors group">
+                                <div className="w-12 h-12 rounded-full bg-[#ffffff]/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Plus size={20} className="text-[#D4AF37]" />
                                 </div>
-                                <span className="absolute bottom-3 right-3 text-[10px] text-[#C8C8C8]/80">{outfit.date}</span>
-                            </div>
-                        ))}
-                    </div>
+                                <span className="text-xs text-[#C8C8C8] font-medium">{t("analyze_new")}</span>
+                            </Link>
+
+                            {/* Outfit Cards */}
+                            {analyses.map((analysis) => (
+                                <div key={analysis.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer border border-[#ffffff]/10 hover:border-[#D4AF37]/50 transition-colors">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={analysis.image_url} alt="Analysis" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                                    
+                                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+                                        <Sparkles size={12} className="text-[#D4AF37]" />
+                                        <span className="text-xs font-bold text-[#F5F0E8]">{analysis.aura_score || '-'}</span>
+                                    </div>
+                                    <span className="absolute bottom-3 right-3 text-[10px] text-[#C8C8C8]/80">{getRelativeTime(analysis.created_at)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
