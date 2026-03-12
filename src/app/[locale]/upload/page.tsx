@@ -17,8 +17,11 @@ export default function UploadPage() {
 
   useEffect(() => {
     const errorParam = searchParams?.get("error");
-    if (errorParam === "api_failed") {
-      toast.error("Yapay Zeka analizi başarısız oldu. Lütfen tekrar deneyin.", {
+    if (errorParam) {
+      const errMsg = errorParam === "api_failed" 
+        ? "Yapay Zeka analizi başarısız oldu. Lütfen tekrar deneyin." 
+        : `API Hatası: ${decodeURIComponent(errorParam)}`;
+      toast.error(errMsg, {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,

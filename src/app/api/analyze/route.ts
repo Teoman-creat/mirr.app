@@ -19,9 +19,17 @@ export async function POST(req: Request) {
     // Initialize the SDK
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
     
-    // We use gemini-1.5-pro for vision tasks and complex reasoning
+    const systemInstruction = `Sen ünlü bir 'Yapay Zeka Senior Moda Danışmanı'sın (AI Senior Fashion Consultant).
+Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekilde analiz etmen gerekiyor.
+Öncelikle fotoğraftaki objeleri (kıyafet parçaları, renkler, kesimler, aksesuarlar) tespit et, sonra bu objelerin birbiriyle uyumunu analiz et.
+${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel 'Stil Hedefi' (Style Goal): "${styleGoal}". Analizini bu hedefe uyum bağlamında değerlendir ve hedefi tutturup tutturmadığını eleştirilerinde belirt.` : ''}
+
+Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
+
+    // We use gemini-1.5-flash for faster responses to avoid Vercel timeouts
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
+        model: "gemini-1.5-flash",
+        systemInstruction,
         generationConfig: {
             temperature: 0.8,
             responseMimeType: "application/json",
@@ -52,13 +60,6 @@ export async function POST(req: Request) {
         }
     });
 
-    const systemInstruction = `Sen ünlü bir 'Yapay Zeka Senior Moda Danışmanı'sın (AI Senior Fashion Consultant).
-Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekilde analiz etmen gerekiyor.
-Öncelikle fotoğraftaki objeleri (kıyafet parçaları, renkler, kesimler, aksesuarlar) tespit et, sonra bu objelerin birbiriyle uyumunu analiz et.
-${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel 'Stil Hedefi' (Style Goal): "${styleGoal}". Analizini bu hedefe uyum bağlamında değerlendir ve hedefi tutturup tutturmadığını eleştirilerinde belirt.` : ''}
-
-Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
-
     const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
     // Extract mime type if present, otherwise default to image/jpeg
     let mimeType = "image/jpeg";
@@ -76,7 +77,6 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
     console.log("Calling model.generateContent...");
     try {
       const result = await model.generateContent([
-          systemInstruction, 
           { text: "Bu stili/kıyafeti detaylı şekilde analiz et." }, 
           imagePart
       ]);
@@ -92,9 +92,12 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
       throw genErr;
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image analysis API error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to analyze image' }), { 
+    return new Response(JSON.stringify({ 
+      error: 'Failed to analyze image', 
+      details: error?.message || error?.toString() || 'Unknown error' 
+    }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

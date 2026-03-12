@@ -27,16 +27,20 @@ export default function AnalyzePage() {
         });
 
         if (!res.ok) {
-          throw new Error("Failed to analyze image");
+          const errorData = await res.json().catch(() => ({}));
+          console.error("API Error Response:", errorData);
+          const errorMsg = errorData.details ? encodeURIComponent(errorData.details) : "api_failed";
+          throw new Error(errorMsg);
         }
 
         const data = await res.json();
         sessionStorage.setItem("mirr_result_data", JSON.stringify(data));
         router.push(`/${locale}/result`);
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error during analysis:", error);
-        router.push(`/${locale}/upload?error=api_failed`);
+        const errMsg = error.message && error.message !== "api_failed" ? error.message : "api_failed";
+        router.push(`/${locale}/upload?error=${errMsg}`);
       }
     };
 
