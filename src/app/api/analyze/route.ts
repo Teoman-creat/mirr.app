@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { createClient } from "@/utils/supabase/server";
 
 export const maxDuration = 30; // Serverless function timeout
 
@@ -83,6 +84,34 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
       console.log("Received response from model.");
       const responseText = result.response.text();
       console.log("Response text:", responseText);
+
+      // Attempt to save to Supabase
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+            const parsedData = JSON.parse(responseText);
+            const { error: dbError } = await supabase.from('analyses').insert({
+                user_id: user.id,
+                style_goal: styleGoal || null,
+                aura_score: parsedData.auraScore,
+                vibe: parsedData.vibe,
+                strengths: parsedData.strengths,
+                improvements: parsedData.improvements
+            });
+            if (dbError) {
+                console.error("Error saving to database:", dbError);
+                // Do not throw, we still want to return the result to the user even if saving failed
+            } else {
+                console.log("Analysis successfully saved to database.");
+            }
+        } else {
+            console.log("No authenticated user found, skipping database save.");
+        }
+      } catch (dbEx) {
+        console.error("Exception while saving to database:", dbEx);
+      }
       
       return new Response(responseText, {
           headers: { 'Content-Type': 'application/json' }
