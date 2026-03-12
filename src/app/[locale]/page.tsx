@@ -1,12 +1,13 @@
 import React from "react";
 import { Camera, Search, User, Zap, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { useTranslations, useLocale } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { useLocale } from "next-intl";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Home() {
-  const t = await useTranslations("Home");
+  const t = await getTranslations("Home");
   const locale = useLocale();
 
   const supabase = createClient();
