@@ -26,9 +26,9 @@ ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel '
 
 Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
 
-    // We use gemini-1.5-flash for faster responses to avoid Vercel timeouts
+    // We use gemini-2.5-flash since gemini-1.5-flash is not supported on this project
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction,
         generationConfig: {
             temperature: 0.8,
