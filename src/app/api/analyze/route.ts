@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     console.log("Analyzing image with Google SDK...", { styleGoal, previewLength: image.length });
     
-    // Initialize the SDK
+    // Initialize the SDK, forcing API version v1 because v1beta throws 404 for recent flash models
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
     
     const systemInstruction = `Sen ünlü bir 'Yapay Zeka Senior Moda Danışmanı'sın (AI Senior Fashion Consultant).
@@ -27,9 +27,9 @@ ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel '
 
 Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
 
-    // We use gemini-2.0-flash since gemini-1.5-flash is not supported on this project
+    // We use gemini-1.5-flash-latest since it is universally available in the SDK
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
+        model: "gemini-1.5-flash-latest",
         systemInstruction,
         generationConfig: {
             temperature: 0.8,
