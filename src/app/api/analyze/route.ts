@@ -27,9 +27,9 @@ ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel '
 
 Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
 
-    // We use gemini-1.5-flash-latest since it is universally available in the SDK
+    // We use gemini-1.5-flash since it is the standard stable model
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash-latest",
+        model: "gemini-1.5-flash",
         systemInstruction,
         generationConfig: {
             temperature: 0.8,
