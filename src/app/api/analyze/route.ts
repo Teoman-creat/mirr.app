@@ -19,6 +19,11 @@ export async function POST(req: Request) {
     
     // Initialize the SDK, forcing API version v1 because v1beta throws 404 for recent flash models
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
+    genAI.apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || ''; // just to be safe
+
+    // The SDK uses `v1beta` by default in fetch calls. 
+    // This hack overrides the internal base url for this instance to force `v1`
+    (genAI as any).baseUrl = "https://generativelanguage.googleapis.com/v1";
     
     const systemInstruction = `Sen ünlü bir 'Yapay Zeka Senior Moda Danışmanı'sın (AI Senior Fashion Consultant).
 Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekilde analiz etmen gerekiyor.
