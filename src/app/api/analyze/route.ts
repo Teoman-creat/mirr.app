@@ -15,11 +15,6 @@ export async function POST(req: Request) {
       });
     }
 
-    console.log("Analyzing image with Google SDK...", { styleGoal, previewLength: image.length });
-    
-    // Initialize the SDK
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
-    
     const systemInstruction = `Sen ünlü bir 'Yapay Zeka Senior Moda Danışmanı'sın (AI Senior Fashion Consultant).
 Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekilde analiz etmen gerekiyor.
 Öncelikle fotoğraftaki objeleri (kıyafet parçaları, renkler, kesimler, aksesuarlar) tespit et, sonra bu objelerin birbiriyle uyumunu analiz et.
@@ -27,62 +22,84 @@ ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel '
 
 Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
 
-    // We use gemini-1.5-flash since it is the standard stable model
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction,
-        generationConfig: {
-            temperature: 0.8,
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    auraScore: {
-                        type: SchemaType.NUMBER,
-                        description: "Nihai Puan (Final Score): 100 üzerinden genel stil ve aura puanı."
-                    },
-                    vibe: {
-                        type: SchemaType.STRING,
-                        description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
-                    },
-                    strengths: {
-                        type: SchemaType.ARRAY,
-                        items: { type: SchemaType.STRING },
-                        description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
-                    },
-                    improvements: {
-                        type: SchemaType.ARRAY,
-                        items: { type: SchemaType.STRING },
-                        description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
-                    }
-                },
-                required: ["auraScore", "vibe", "strengths", "improvements"]
-            }
-        }
-    });
-
     const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
-    // Extract mime type if present, otherwise default to image/jpeg
     let mimeType = "image/jpeg";
     if (image.startsWith('data:')) {
       mimeType = image.split(';')[0].split(':')[1];
     }
 
-    const imagePart = {
-        inlineData: {
-            data: base64Data,
-            mimeType
-        }
-    };
-
-    console.log("Calling model.generateContent...");
+    console.log("Calling explicitly v1 REST API for generateContent...");
+    
+    // We bypass the official SDK to force the `v1` endpoint since v1beta returns 404 for some versions
     try {
-      const result = await model.generateContent([
-          { text: "Bu stili/kıyafeti detaylı şekilde analiz et." }, 
-          imagePart
-      ]);
-      console.log("Received response from model.");
-      const responseText = result.response.text();
+      const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: systemInstruction }]
+              },
+              contents: [
+                  {
+                      parts: [
+                          { text: "Bu stili/kıyafeti detaylı şekilde analiz et." },
+                          {
+                              inlineData: {
+                                  data: base64Data,
+                                  mimeType: mimeType
+                              }
+                          }
+                      ]
+                  }
+              ],
+              generationConfig: {
+                  temperature: 0.8,
+                  responseMimeType: "application/json",
+                  responseSchema: {
+                      type: "OBJECT",
+                      properties: {
+                          auraScore: {
+                              type: "NUMBER",
+                              description: "Nihai Puan (Final Score): 100 üzerinden genel stil ve aura puanı."
+                          },
+                          vibe: {
+                              type: "STRING",
+                              description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
+                          },
+                          strengths: {
+                              type: "ARRAY",
+                              items: { type: "STRING" },
+                              description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                          },
+                          improvements: {
+                              type: "ARRAY",
+                              items: { type: "STRING" },
+                              description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                          }
+                      },
+                      required: ["auraScore", "vibe", "strengths", "improvements"]
+                  }
+              }
+          })
+      });
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Gemini API Error details:", response.status, errorText);
+          throw new Error(`Google API returned ${response.status}: ${errorText}`);
+      }
+      
+      const resultData = await response.json();
+      console.log("Received response from model via fetch.");
+      
+      const responseText = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!responseText) {
+          throw new Error("No text found in API response.");
+      }
+      
       console.log("Response text:", responseText);
 
       // Attempt to save to Supabase
