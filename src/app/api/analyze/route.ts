@@ -20,7 +20,15 @@ Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekil
 Öncelikle fotoğraftaki objeleri (kıyafet parçaları, renkler, kesimler, aksesuarlar) tespit et, sonra bu objelerin birbiriyle uyumunu analiz et.
 ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel 'Stil Hedefi' (Style Goal): "${styleGoal}". Analizini bu hedefe uyum bağlamında değerlendir ve hedefi tutturup tutturmadığını eleştirilerinde belirt.` : ''}
 
-Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
+Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.
+
+AŞAĞIDAKİ JSON FORMATINDA YANIT VER (başka hiçbir metin veya markdown bloğu kullanma, sadece JSON dizesi olsun):
+{
+  "auraScore": 85,
+  "vibe": "Zarif Minimalizm",
+  "strengths": ["Güçlü yön 1", "Güçlü yön 2"],
+  "improvements": ["Gelişim alanı 1", "Gelişim alanı 2"]
+}`;
 
     const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
     let mimeType = "image/jpeg";
@@ -39,12 +47,10 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
               'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-              systemInstruction: {
-                parts: [{ text: systemInstruction }]
-              },
               contents: [
                   {
                       parts: [
+                          { text: systemInstruction },
                           { text: "Bu stili/kıyafeti detaylı şekilde analiz et." },
                           {
                               inlineData: {
@@ -56,32 +62,7 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
                   }
               ],
               generationConfig: {
-                  temperature: 0.8,
-                  responseMimeType: "application/json",
-                  responseSchema: {
-                      type: "OBJECT",
-                      properties: {
-                          auraScore: {
-                              type: "NUMBER",
-                              description: "Nihai Puan (Final Score): 100 üzerinden genel stil ve aura puanı."
-                          },
-                          vibe: {
-                              type: "STRING",
-                              description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
-                          },
-                          strengths: {
-                              type: "ARRAY",
-                              items: { type: "STRING" },
-                              description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
-                          },
-                          improvements: {
-                              type: "ARRAY",
-                              items: { type: "STRING" },
-                              description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
-                          }
-                      },
-                      required: ["auraScore", "vibe", "strengths", "improvements"]
-                  }
+                  temperature: 0.8
               }
           })
       });
@@ -95,11 +76,14 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
       const resultData = await response.json();
       console.log("Received response from model via fetch.");
       
-      const responseText = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
+      let responseText = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!responseText) {
           throw new Error("No text found in API response.");
       }
       
+      // Clean markdown formatting if present (since we can't use responseMimeType="application/json")
+      responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
       console.log("Response text:", responseText);
 
       // Attempt to save to Supabase
