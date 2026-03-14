@@ -20,15 +20,7 @@ Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekil
 Öncelikle fotoğraftaki objeleri (kıyafet parçaları, renkler, kesimler, aksesuarlar) tespit et, sonra bu objelerin birbiriyle uyumunu analiz et.
 ${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel 'Stil Hedefi' (Style Goal): "${styleGoal}". Analizini bu hedefe uyum bağlamında değerlendir ve hedefi tutturup tutturmadığını eleştirilerinde belirt.` : ''}
 
-Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.
-
-AŞAĞIDAKİ JSON FORMATINDA YANIT VER (başka hiçbir metin veya markdown bloğu kullanma, sadece JSON dizesi olsun):
-{
-  "auraScore": 85,
-  "vibe": "Zarif Minimalizm",
-  "strengths": ["Güçlü yön 1", "Güçlü yön 2"],
-  "improvements": ["Gelişim alanı 1", "Gelişim alanı 2"]
-}`;
+Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
 
     const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
     let mimeType = "image/jpeg";
@@ -36,21 +28,23 @@ AŞAĞIDAKİ JSON FORMATINDA YANIT VER (başka hiçbir metin veya markdown bloğ
       mimeType = image.split(';')[0].split(':')[1];
     }
 
-    console.log("Calling explicitly v1 REST API for generateContent...");
+    console.log("Calling explicitly v1beta REST API for generateContent...");
     
-    // We bypass the official SDK to force the `v1` endpoint since v1beta returns 404 for some versions
+    // We bypass the official SDK to force the `v1beta` endpoint correctly
     try {
       const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: systemInstruction }]
+              },
               contents: [
                   {
                       parts: [
-                          { text: systemInstruction },
                           { text: "Bu stili/kıyafeti detaylı şekilde analiz et." },
                           {
                               inlineData: {
@@ -62,7 +56,32 @@ AŞAĞIDAKİ JSON FORMATINDA YANIT VER (başka hiçbir metin veya markdown bloğ
                   }
               ],
               generationConfig: {
-                  temperature: 0.8
+                  temperature: 0.8,
+                  responseMimeType: "application/json",
+                  responseSchema: {
+                      type: "OBJECT",
+                      properties: {
+                          auraScore: {
+                              type: "NUMBER",
+                              description: "Nihai Puan (Final Score): 100 üzerinden genel stil ve aura puanı."
+                          },
+                          vibe: {
+                              type: "STRING",
+                              description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
+                          },
+                          strengths: {
+                              type: "ARRAY",
+                              items: { type: "STRING" },
+                              description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                          },
+                          improvements: {
+                              type: "ARRAY",
+                              items: { type: "STRING" },
+                              description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                          }
+                      },
+                      required: ["auraScore", "vibe", "strengths", "improvements"]
+                  }
               }
           })
       });
