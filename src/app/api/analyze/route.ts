@@ -28,79 +28,69 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
       mimeType = image.split(';')[0].split(':')[1];
     }
 
-    console.log("Calling explicitly v1beta REST API for generateContent...");
+    console.log("Calling Gemini API via official SDK...");
     
-    // We bypass the official SDK to force the `v1beta` endpoint correctly
     try {
       const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-              systemInstruction: {
-                parts: [{ text: systemInstruction }]
-              },
-              contents: [
-                  {
-                      parts: [
-                          { text: "Bu stili/kıyafeti detaylı şekilde analiz et." },
-                          {
-                              inlineData: {
-                                  data: base64Data,
-                                  mimeType: mimeType
-                              }
-                          }
-                      ]
-                  }
-              ],
-              generationConfig: {
-                  temperature: 0.8,
-                  responseMimeType: "application/json",
-                  responseSchema: {
-                      type: "OBJECT",
-                      properties: {
-                          auraScore: {
-                              type: "NUMBER",
-                              description: "Nihai Puan (Final Score): 100 üzerinden genel stil ve aura puanı."
-                          },
-                          vibe: {
-                              type: "STRING",
-                              description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
-                          },
-                          strengths: {
-                              type: "ARRAY",
-                              items: { type: "STRING" },
-                              description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
-                          },
-                          improvements: {
-                              type: "ARRAY",
-                              items: { type: "STRING" },
-                              description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
-                          }
-                      },
-                      required: ["auraScore", "vibe", "strengths", "improvements"]
-                  }
-              }
-          })
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: systemInstruction,
       });
 
-      if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Gemini API Error details:", response.status, errorText);
-          throw new Error(`Google API returned ${response.status}: ${errorText}`);
-      }
+      const response = await model.generateContent({
+        contents: [
+            {
+                role: "user",
+                parts: [
+                    { text: "Bu stili/kıyafeti detaylı şekilde analiz et." },
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: mimeType
+                        }
+                    }
+                ]
+            }
+        ],
+        generationConfig: {
+            temperature: 0.8,
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: SchemaType.OBJECT,
+                properties: {
+                    auraScore: {
+                        type: SchemaType.NUMBER,
+                        description: "Nihai Puan (Final Score): 100 üzerinden genel stil ve aura puanı."
+                    },
+                    vibe: {
+                        type: SchemaType.STRING,
+                        description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
+                    },
+                    strengths: {
+                        type: SchemaType.ARRAY,
+                        items: { type: SchemaType.STRING },
+                        description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                    },
+                    improvements: {
+                        type: SchemaType.ARRAY,
+                        items: { type: SchemaType.STRING },
+                        description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                    }
+                },
+                required: ["auraScore", "vibe", "strengths", "improvements"]
+            }
+        }
+      });
+
+      console.log("Received response from model via SDK.");
       
-      const resultData = await response.json();
-      console.log("Received response from model via fetch.");
-      
-      let responseText = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
+      let responseText = response.response.text();
       if (!responseText) {
           throw new Error("No text found in API response.");
       }
       
-      // Clean markdown formatting if present (since we can't use responseMimeType="application/json")
+      // Clean markdown formatting if present
       responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
       console.log("Response text:", responseText);
