@@ -26,17 +26,17 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-[#F5F0E8] relative overflow-hidden">
       {/* Decorative Glow Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#D4AF37] opacity-10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#C8C8C8] opacity-5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#D4AF37] opacity-10 blur-[120px] rounded-full pointer-events-none -z-10" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#C8C8C8] opacity-5 blur-[100px] rounded-full pointer-events-none -z-10" />
 
       {/* Header */}
-      <header className="flex justify-between items-center p-6 z-10 glass-dark sticky top-0">
-         <h1 className="text-3xl tracking-widest font-serif font-medium" style={{ fontFamily: 'Canela, serif' }}>MIRR</h1>
-         <div className="flex items-center gap-4">
+      <header className="flex justify-between items-center p-6 z-50 glass-dark sticky top-0 relative">
+         <h1 className="text-3xl tracking-widest font-serif font-medium cursor-default" style={{ fontFamily: 'Canela, serif' }}>MIRR</h1>
+         <div className="flex items-center gap-4 relative z-50">
             <LanguageSwitcher />
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+            <Link href={`/${locale}/profile`} className="relative z-50 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-white/20 transition-colors cursor-pointer">
                 <User size={20} className="text-[#F5F0E8]" />
-            </div>
+            </Link>
          </div>
       </header>
 
