@@ -129,11 +129,18 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
             }
 
             if (imageUrl) {
+                // Ensure we have a reasoning string (can use first improvement or a combined string)
+                const reasoning = parsedData.improvements && parsedData.improvements.length > 0 
+                  ? parsedData.improvements[0] 
+                  : "Stil DNA'nızı yansıtan harika bir kombin.";
+
                 const { error: dbError } = await supabase.from('analyses').insert({
                     user_id: user.id,
                     image_url: imageUrl,
                     type: "OUTFIT",
                     aura_score: parsedData.auraScore,
+                    vibe: parsedData.vibe, // explicitly save vibe
+                    reasoning: reasoning, // explicitly save reasoning for the profile card
                     strengths: parsedData.strengths,
                     improvements: parsedData.improvements,
                     raw_ai_response: parsedData
@@ -142,7 +149,7 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
                 if (dbError) {
                     console.error("Error saving to database:", dbError);
                 } else {
-                    console.log("Analysis successfully saved to database.");
+                    console.log("Analysis successfully saved to database with vibe and reasoning.");
                 }
             } else {
                 console.log("Skipping database save because image upload failed.");
