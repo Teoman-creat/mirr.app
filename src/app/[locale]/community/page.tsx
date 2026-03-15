@@ -80,28 +80,48 @@ export default function CommunityPage() {
                                     <span className="text-xs font-bold text-[#F5F0E8]">{currentProfile.score} Aura</span>
                                 </div>
                                 
-                                {/* Action Buttons */}
-                                <div className="flex gap-3 justify-between">
-                                    <button onClick={handleRate} className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 bg-[#ffffff]/10 hover:bg-[#ffffff]/15 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all transform hover:scale-105 active:scale-95 group">
-                                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
-                                           <Flame size={20} className="text-orange-400 group-hover:fill-orange-400" />
-                                        </div>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_fire")}</span>
+                                {/* Action Buttons - Redesigned for more diversity */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-orange-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
+                                        <Flame size={18} className="text-orange-400 group-hover:fill-orange-400 transition-colors" />
+                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_fire") || "Ateş"}</span>
                                     </button>
 
-                                    <button onClick={handleRate} className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 bg-[#ffffff]/10 hover:bg-[#ffffff]/15 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all transform hover:scale-105 active:scale-95 group">
-                                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                                           <Frown size={20} className="text-blue-400" />
-                                        </div>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_meh")}</span>
+                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-purple-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
+                                        <TrendingUp size={18} className="text-purple-400 transition-colors" />
+                                        <span className="text-[10px] uppercase font-bold tracking-wider">Trend</span>
+                                    </button>
+                                    
+                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-blue-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
+                                        <div className="w-4 h-4 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                                        <span className="text-[10px] uppercase font-bold tracking-wider">İkonik</span>
                                     </button>
 
-                                    <button onClick={handleRate} className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 bg-[#ffffff]/10 hover:bg-[#ffffff]/15 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all transform hover:scale-105 active:scale-95 group">
-                                        <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                                           <MessageSquare size={20} className="text-purple-400 group-hover:fill-purple-400" />
-                                        </div>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_notes")}</span>
+                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-gray-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
+                                        <Frown size={18} className="text-gray-400" />
+                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_meh") || "İdare Eder"}</span>
                                     </button>
+                                </div>
+                                
+                                {/* Notes Section */}
+                                <div className="mt-2 text-center w-full">
+                                    <button onClick={() => {
+                                        const noteSection = document.getElementById('note-section');
+                                        if (noteSection) noteSection.classList.toggle('hidden');
+                                    }} className="w-full py-3 flex items-center justify-center gap-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] rounded-xl border border-[#D4AF37]/30 transition-colors">
+                                        <MessageSquare size={16} />
+                                        <span className="text-xs font-semibold tracking-wide">Stil Notu Bırak</span>
+                                    </button>
+                                    
+                                    <div id="note-section" className="hidden mt-3 text-left animate-fade-in">
+                                        <textarea 
+                                            placeholder="Bu kombin hakkında ne düşünüyorsun? İlham verici detaylar..." 
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-[#F5F0E8] placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50 min-h-[80px] resize-none"
+                                        />
+                                        <button onClick={handleRate} className="w-full mt-2 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg text-sm hover:opacity-90 transition-opacity">
+                                            Gönder ve Geç
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -111,8 +131,8 @@ export default function CommunityPage() {
                         <div className="w-20 h-20 rounded-full bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 mb-4 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
                             <Search size={32} className="text-[#D4AF37]/50" />
                         </div>
-                        <h3 className="text-xl font-serif text-[#F5F0E8]">{t("no_more_profiles")}</h3>
-                        <p className="text-[#C8C8C8] text-sm font-light">Check back later for new looks.</p>
+                        <h3 className="text-xl font-serif text-[#F5F0E8]">{t("no_more_profiles") || "Tüm Stiller Tamamlandı"}</h3>
+                        <p className="text-[#C8C8C8] text-sm font-light">Daha fazla ilham için daha sonra tekrar kontrol edin.</p>
                     </div>
                 )}
             </div>
