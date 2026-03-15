@@ -164,19 +164,38 @@ export default function ProfilePage() {
                             </Link>
 
                             {/* Outfit Cards */}
-                            {analyses.map((analysis) => (
-                                <div key={analysis.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer border border-[#ffffff]/10 hover:border-[#D4AF37]/50 transition-colors">
+                            {analyses.map((analysis) => {
+                                // Extract public URL if it's a relative path from storage
+                                const imageUrl = analysis.image_url?.startsWith('http') 
+                                    ? analysis.image_url 
+                                    : `https://guzatcuhupifrhkrnmxe.supabase.co/storage/v1/object/public/analyses/${analysis.image_url}`;
+
+                                return (
+                                <div key={analysis.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer border border-[#ffffff]/10 hover:border-[#D4AF37]/50 transition-all duration-300">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={analysis.image_url} alt="Analysis" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                                    <img src={imageUrl} alt="Analysis" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                     
-                                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-                                        <Sparkles size={12} className="text-[#D4AF37]" />
-                                        <span className="text-xs font-bold text-[#F5F0E8]">{analysis.aura_score || '-'}</span>
+                                    {/* Base Gradient for metrics */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-40 transition-opacity" />
+                                    
+                                    {/* Default View: Score & Time */}
+                                    <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end group-hover:opacity-0 transition-opacity duration-300">
+                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg border border-[#D4AF37]/20">
+                                            <Sparkles size={12} className="text-[#D4AF37]" />
+                                            <span className="text-xs font-bold text-[#F5F0E8]">{analysis.aura_score || '-'}</span>
+                                        </div>
+                                        <span className="text-[10px] text-[#C8C8C8]/80">{getRelativeTime(analysis.created_at)}</span>
                                     </div>
-                                    <span className="absolute bottom-3 right-3 text-[10px] text-[#C8C8C8]/80">{getRelativeTime(analysis.created_at)}</span>
+
+                                    {/* Hover Overlay: Vibe & Comments */}
+                                    <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-center">
+                                        <h4 className="text-[#D4AF37] font-semibold text-sm mb-2 uppercase tracking-wide">{analysis.vibe || 'Style DNA'}</h4>
+                                        <p className="text-[#F5F0E8] text-xs leading-relaxed line-clamp-6 italic">
+                                            "{analysis.reasoning || 'Otantik bir stil yansıması.'}"
+                                        </p>
+                                    </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     )}
                 </div>
