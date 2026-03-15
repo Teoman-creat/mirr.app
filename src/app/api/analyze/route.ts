@@ -98,8 +98,12 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
       // Attempt to save to Supabase
       try {
         const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log("Supabase client initialized in API route. Checking auth...");
         
+        const { data: { user }, error: authErr } = await supabase.auth.getUser();
+        
+        console.log("Auth user result:", { userId: user?.id, error: authErr?.message });
+
         if (user) {
             const parsedData = JSON.parse(responseText);
             let imageUrl = '';
