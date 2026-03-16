@@ -73,7 +73,7 @@ export default async function Home() {
             <div className="w-full flex flex-col gap-8 text-left">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-serif text-[#D4AF37]">Welcome Back,</h2>
+                        <h2 className="text-3xl font-serif text-[#D4AF37]">{t("dashboard_welcome")}</h2>
                         <p className="text-[#C8C8C8]/60 text-sm mt-1">{user.email?.split('@')[0]}</p>
                     </div>
                 </div>
@@ -86,8 +86,8 @@ export default async function Home() {
                             <Zap size={24} />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-lg text-[#F5F0E8]">New Analysis</h3>
-                            <p className="text-sm text-[#C8C8C8]/60">Scan a new outfit</p>
+                            <h3 className="font-semibold text-lg text-[#F5F0E8]">{t("dashboard_new_analysis")}</h3>
+                            <p className="text-sm text-[#C8C8C8]/60">{t("dashboard_scan_outfit")}</p>
                         </div>
                     </div>
                 </Link>
@@ -95,14 +95,14 @@ export default async function Home() {
                 {/* Recent Analyses Snippet */}
                 <div className="space-y-4">
                     <div className="flex justify-between items-end mb-2">
-                        <h3 className="font-serif text-xl tracking-wide">Recent activity</h3>
-                        <Link href={`/${locale}/profile`} className="text-xs text-[#D4AF37] uppercase tracking-wider hover:underline">View All</Link>
+                        <h3 className="font-serif text-xl tracking-wide">{t("dashboard_recent")}</h3>
+                        <Link href={`/${locale}/profile`} className="text-xs text-[#D4AF37] uppercase tracking-wider hover:underline">{t("dashboard_view_all")}</Link>
                     </div>
 
                     {recentAnalyses.length === 0 ? (
                         <div className="p-8 border border-white/5 rounded-2xl bg-white/5 text-center flex flex-col items-center gap-3">
                             <Camera size={32} className="text-white/20" />
-                            <p className="text-sm text-[#C8C8C8]/50">No recent analyses found. Upload a photo to get started.</p>
+                            <p className="text-sm text-[#C8C8C8]/50">{t("dashboard_empty_recent")}</p>
                         </div>
                     ) : (
                         <div className="flex flex-col gap-3">

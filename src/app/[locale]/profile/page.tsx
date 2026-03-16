@@ -204,14 +204,14 @@ export default function ProfilePage() {
             {activeTab === 'evolution' && (
                 <div className="flex flex-col items-center justify-center h-48 animate-fade-in text-center border border-dashed border-[#ffffff]/10 rounded-3xl bg-[#ffffff]/2">
                     <TrendingUp size={32} className="text-[#D4AF37]/50 mb-4" />
-                    <p className="text-sm text-[#C8C8C8]">Style Evolution chart coming soon.</p>
+                    <p className="text-sm text-[#C8C8C8]">{t("evolution_coming_soon")}</p>
                 </div>
             )}
 
             {activeTab === 'grooming' && (
                 <div className="flex flex-col items-center justify-center h-48 animate-fade-in text-center border border-dashed border-[#ffffff]/10 rounded-3xl bg-[#ffffff]/2">
                     <Scissors size={32} className="text-[#D4AF37]/50 mb-4" />
-                    <p className="text-sm text-[#C8C8C8]">Hair & Grooming analysis coming soon.</p>
+                    <p className="text-sm text-[#C8C8C8]">{t("grooming_coming_soon")}</p>
                 </div>
             )}
         </div>

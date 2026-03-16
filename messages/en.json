@@ -82,7 +82,15 @@
     "saved_looks": "Saved Looks",
     "style_dna": "Style DNA",
     "recent_outfits": "Recent Outfits",
-    "analyze_new": "Analyze New Look"
+    "analyze_new": "Analyze New Look",
+    "welcome_back": "Welcome Back,",
+    "new_analysis": "New Analysis",
+    "scan_outfit": "Scan a new outfit",
+    "recent_activity": "Recent activity",
+    "view_all": "View All",
+    "empty_recent": "No recent analyses found. Upload a photo to get started.",
+    "evolution_coming_soon": "Style Evolution chart coming soon.",
+    "grooming_coming_soon": "Hair & Grooming analysis coming soon."
   },
   "Community": {
     "title": "Community Lens",

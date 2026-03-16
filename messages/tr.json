@@ -5,7 +5,13 @@
     "description": "Eşsiz estetiğinize ve vücut tipinize göre özel olarak tasarlanmış birinci sınıf yapay zeka stilistiniz.",
     "analyze_btn": "Görünümümü Analiz Et",
     "nav_inspo": "İlham",
-    "nav_profile": "Profil"
+    "nav_profile": "Profil",
+    "dashboard_welcome": "Tekrar Hoş Geldiniz,",
+    "dashboard_new_analysis": "Yeni Analiz",
+    "dashboard_scan_outfit": "Yeni bir kıyafet tara",
+    "dashboard_recent": "Son aktiviteler",
+    "dashboard_view_all": "Tümünü Gör",
+    "dashboard_empty_recent": "Henüz analiz bulunamadı. Başlamak için bir fotoğraf yükleyin."
   },
   "Login": {
     "title": "Mirr'a Hoş Geldiniz",
@@ -82,7 +88,15 @@
     "saved_looks": "Kaydedilenler",
     "style_dna": "Stil DNA",
     "recent_outfits": "Son Kıyafetler",
-    "analyze_new": "Yeni Görünüm Analiz Et"
+    "analyze_new": "Yeni Görünüm Analiz Et",
+    "welcome_back": "Tekrar Hoş Geldiniz,",
+    "new_analysis": "Yeni Analiz",
+    "scan_outfit": "Yeni bir kıyafet tara",
+    "recent_activity": "Son aktiviteler",
+    "view_all": "Tümünü Gör",
+    "empty_recent": "Henüz analiz bulunamadı. Başlamak için bir fotoğraf yükleyin.",
+    "evolution_coming_soon": "Stil Evrimi grafiği yakında burada olacak.",
+    "grooming_coming_soon": "Saç ve Bakım analizi yakında burada olacak."
   },
   "Community": {
     "title": "Topluluk Lensi",
