@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Share, Sparkles, Flame, CheckCircle2, ChevronRight, User } from "lucide-react";
+import { ArrowLeft, Share, Sparkles, Flame, CheckCircle2, ChevronRight, User, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 
@@ -49,9 +49,14 @@ export default function ResultPage() {
             <ArrowLeft size={18} className="text-[#C8C8C8]" />
          </Link>
          <h1 className="text-xs font-semibold tracking-widest uppercase text-[#C8C8C8]">{t("title")}</h1>
-         <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors">
-            <Share size={16} className="text-[#C8C8C8]" />
-         </button>
+         <div className="flex gap-2">
+           <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors">
+              <Share size={16} className="text-[#C8C8C8]" />
+           </button>
+           <Link href={`/${locale}`} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors">
+              <X size={18} className="text-[#C8C8C8]" />
+           </Link>
+         </div>
       </header>
 
       {/* Main Content Area */}

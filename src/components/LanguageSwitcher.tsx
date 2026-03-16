@@ -8,13 +8,13 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   const handleLanguageChange = (newLocale: string) => {
-    // Basic language toggle for demonstration. 
-    // This replaces the current locale prefix in the pathname with the new one
-    const newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
+    // Safely replace the locale prefix only at the beginning of the pathname
+    const regex = new RegExp(`^/${locale}(/|$)`);
+    const newPath = pathname.replace(regex, `/${newLocale}$1`);
     
     // Fallback if we're at the root or unexpected path
     if (newPath === pathname) {
-       router.push(`/${newLocale}${pathname}`);
+       router.push(`/${newLocale}${pathname.startsWith('/') ? pathname : '/' + pathname}`);
     } else {
        router.push(newPath);
     }
