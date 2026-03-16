@@ -13,7 +13,17 @@
     "email_label": "E-posta",
     "email_placeholder": "E-posta adresinizi girin",
     "continue_btn": "Devam Et",
-    "or": "VEYA"
+    "or": "VEYA",
+    "auth_signup_email": "E-posta adresi",
+    "auth_signup_password": "Şifre oluşturun",
+    "auth_signup_btn": "Kayıt Ol",
+    "auth_signup_social": "{{provider}} ile kayıt ol",
+    "auth_signup_link": "Hesabınız yok mu? Kayıt olun",
+    "auth_signin_email": "E-posta adresi",
+    "auth_signin_password": "Şifreniz",
+    "auth_signin_btn": "Giriş Yap",
+    "auth_signin_social": "{{provider}} ile giriş yap",
+    "auth_signin_link": "Zaten hesabınız var mı? Giriş yapın"
   },
   "Upload": {
     "title": "Yeni Görünüm",

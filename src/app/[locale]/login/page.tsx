@@ -47,10 +47,10 @@ export default function LoginPage() {
                 <ScanFace className="w-8 h-8 text-[#D4AF37]" strokeWidth={1.5} />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight mb-2 font-serif text-transparent bg-clip-text bg-gradient-to-br from-[#F5F0E8] to-[#C8C8C8]">
-              {t("title") || "Welcome"}
+              {t("title")}
             </h1>
             <p className="text-[#C8C8C8]/70 text-sm">
-                Unlock your Style DNA.
+                {t("subtitle")}
             </p>
         </div>
 
@@ -83,18 +83,18 @@ export default function LoginPage() {
                 localization={{
                     variables: {
                         sign_up: {
-                            email_label: 'Email address',
-                            password_label: 'Create a Password',
-                            button_label: 'Sign up',
-                            social_provider_text: 'Sign up with {{provider}}',
-                            link_text: "Don't have an account? Sign up"
+                            email_label: t("auth_signup_email"),
+                            password_label: t("auth_signup_password"),
+                            button_label: t("auth_signup_btn"),
+                            social_provider_text: t("auth_signup_social"),
+                            link_text: t("auth_signup_link")
                         },
                         sign_in: {
-                            email_label: 'Email address',
-                            password_label: 'Your Password',
-                            button_label: 'Sign in',
-                            social_provider_text: 'Sign in with {{provider}}',
-                            link_text: "Already have an account? Sign in"
+                            email_label: t("auth_signin_email"),
+                            password_label: t("auth_signin_password"),
+                            button_label: t("auth_signin_btn"),
+                            social_provider_text: t("auth_signin_social"),
+                            link_text: t("auth_signin_link")
                         }
                     }
                 }}

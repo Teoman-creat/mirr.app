@@ -13,7 +13,17 @@
     "email_label": "Email",
     "email_placeholder": "Enter your email",
     "continue_btn": "Continue",
-    "or": "OR"
+    "or": "OR",
+    "auth_signup_email": "Email address",
+    "auth_signup_password": "Create a Password",
+    "auth_signup_btn": "Sign up",
+    "auth_signup_social": "Sign up with {{provider}}",
+    "auth_signup_link": "Don't have an account? Sign up",
+    "auth_signin_email": "Email address",
+    "auth_signin_password": "Your Password",
+    "auth_signin_btn": "Sign in",
+    "auth_signin_social": "Sign in with {{provider}}",
+    "auth_signin_link": "Already have an account? Sign in"
   },
   "Upload": {
     "title": "New Look",
