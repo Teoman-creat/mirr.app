@@ -106,7 +106,10 @@ export default function ProfilePage() {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        alert("Kullanıcı bulunamadı. Lütfen tekrar giriş yapın.");
+        return;
+      }
 
       let newAvatarUrl = userProfile?.avatar_url;
 
@@ -122,13 +125,15 @@ export default function ProfilePage() {
            newAvatarUrl = publicUrlData.publicUrl;
         } else {
            console.error("Upload error:", uploadError);
-           alert("Hesap fotoğrafı yüklenemedi. Lütfen depolama ayarlarını kontrol edin.");
+           alert("Hesap fotoğrafı yüklenemedi: " + uploadError.message);
+           setIsSaving(false);
+           return;
         }
       }
 
       const styleDna = { ...(userProfile?.style_dna || {}), vibe: editForm.vibe };
 
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -138,10 +143,14 @@ export default function ProfilePage() {
           style_dna: styleDna,
           country: editForm.country,
           city: editForm.city,
-          district: editForm.district
+          district: editForm.district,
+          updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
 
-      if (!updateError) {
+      if (updateError) {
+        console.error("Update error:", updateError);
+        alert("Profil kaydedilemedi: " + updateError.message);
+      } else {
         setUserProfile((prev: any) => ({
           ...prev,
           full_name: editForm.full_name,
@@ -154,8 +163,9 @@ export default function ProfilePage() {
         }));
         setIsEditing(false);
       }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error saving profile:", error);
+        alert("Bilinmeyen bir hata oluştu: " + (error?.message || String(error)));
     } finally {
         setIsSaving(false);
     }
