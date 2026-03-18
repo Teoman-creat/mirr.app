@@ -32,7 +32,12 @@
     "gallery": "Gallery",
     "analyze_btn": "Analyze Style DNA",
     "style_goal_label": "Styling Goal (Optional)",
-    "style_goal_placeholder": "e.g., Job interview, first date..."
+    "style_goal_placeholder": "e.g., Job interview, first date...",
+    "type_outfit": "Outfit",
+    "type_grooming": "Grooming",
+    "take_face_photo": "Face Photo",
+    "instruction_face": "Upload a clear, front-facing photo of your face.",
+    "camera_btn": "Camera"
   },
   "Analyze": {
     "title": "Analyzing",
@@ -90,7 +95,18 @@
     "view_all": "View All",
     "empty_recent": "No recent analyses found. Upload a photo to get started.",
     "evolution_coming_soon": "Style Evolution chart coming soon.",
-    "grooming_coming_soon": "Hair & Grooming analysis coming soon."
+    "grooming_coming_soon": "Hair & Grooming analysis coming soon.",
+    "edit_profile": "Edit Profile",
+    "edit_avatar": "Change Photo",
+    "edit_name": "Full Name",
+    "edit_username": "Username",
+    "edit_vibe": "Style Vibe",
+    "edit_country": "Country",
+    "edit_city": "City",
+    "edit_district": "District / Neighborhood",
+    "save_changes": "Save Changes",
+    "cancel": "Cancel",
+    "uploading": "Uploading..."
   },
   "Community": {
     "title": "Community Lens",

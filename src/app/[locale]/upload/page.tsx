@@ -6,10 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { toast } from "react-toastify";
 
+type AnalysisType = 'outfit' | 'grooming';
+
 export default function UploadPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [styleGoal, setStyleGoal] = useState<string>("");
+  const [analysisType, setAnalysisType] = useState<AnalysisType>('outfit');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("Upload");
@@ -78,6 +82,7 @@ export default function UploadPage() {
     if (selectedImage) {
         sessionStorage.setItem("mirr_image", selectedImage);
         sessionStorage.setItem("mirr_style_goal", styleGoal);
+        sessionStorage.setItem("mirr_analysis_type", analysisType);
         router.push(`/${locale}/analyze`);
     }
   };
@@ -98,36 +103,74 @@ export default function UploadPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
         
         {!selectedImage ? (
-            <div className="w-full max-w-sm aspect-[3/4] rounded-3xl border-2 border-dashed border-[#ffffff]/20 bg-[#ffffff]/5 flex flex-col items-center justify-center gap-6 relative group overflow-hidden">
-                
-                {/* Decorative background glow inside the box */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#D4AF37]/5 pointer-events-none" />
+            <div className="w-full max-w-sm flex flex-col gap-6">
 
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#D4AF37] to-[#F5F0E8] flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] text-black mb-4">
-                    <Camera size={32} />
-                </div>
-                
-                <div className="text-center space-y-2 z-10">
-                    <h3 className="text-2xl font-serif">{t("take_photo")}</h3>
-                    <p className="text-[#C8C8C8] text-sm px-8">{t("instruction")}</p>
-                </div>
-
-                <div className="absolute bottom-8 flex gap-4 w-full px-8 z-10">
+                {/* Type Selection Toggle */}
+                <div className="flex bg-[#ffffff]/5 rounded-2xl p-1.5 border border-[#ffffff]/10">
                     <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex-1 bg-[#ffffff]/10 hover:bg-[#ffffff]/15 border border-[#ffffff]/10 rounded-xl py-4 flex flex-col items-center justify-center gap-2 transition-colors backdrop-blur-md"
+                        onClick={() => setAnalysisType('outfit')}
+                        className={`flex-1 py-3 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${analysisType === 'outfit' ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.2)]' : 'text-[#C8C8C8] hover:text-white'}`}
                     >
-                        <ImageIcon size={24} className="text-[#D4AF37]" />
-                        <span className="text-xs uppercase tracking-wider font-semibold">{t("gallery")}</span>
+                        {t("type_outfit") || "Outfit"}
                     </button>
-                    {/* Hidden file input */}
-                    <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        ref={fileInputRef}
-                        onChange={handleImageUpload}
-                    />
+                    <button 
+                        onClick={() => setAnalysisType('grooming')}
+                        className={`flex-1 py-3 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${analysisType === 'grooming' ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.2)]' : 'text-[#C8C8C8] hover:text-white'}`}
+                    >
+                        {t("type_grooming") || "Grooming"}
+                    </button>
+                </div>
+
+                <div className="w-full aspect-[3/4] rounded-3xl border-2 border-dashed border-[#ffffff]/20 bg-[#ffffff]/5 flex flex-col items-center justify-center gap-6 relative group overflow-hidden">
+                    
+                    {/* Decorative background glow inside the box */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#D4AF37]/5 pointer-events-none" />
+
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#D4AF37] to-[#F5F0E8] flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] text-black mb-4">
+                        <Camera size={32} />
+                    </div>
+                    
+                    <div className="text-center space-y-2 z-10 px-6">
+                        <h3 className="text-2xl font-serif">{analysisType === 'outfit' ? t("take_photo") : (t("take_face_photo") || "Face Photo")}</h3>
+                        <p className="text-[#C8C8C8] text-sm">
+                            {analysisType === 'outfit' ? t("instruction") : (t("instruction_face") || "Upload a clear, front-facing photo of your face.")}
+                        </p>
+                    </div>
+
+                    <div className="absolute bottom-6 flex gap-3 w-full px-6 z-10">
+                        {/* Camera Button (Mobile Native) */}
+                        <button 
+                            onClick={() => cameraInputRef.current?.click()}
+                            className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black hover:opacity-90 rounded-xl py-3.5 flex flex-col items-center justify-center gap-1.5 transition-all shadow-lg shadow-[#D4AF37]/20"
+                        >
+                            <Camera size={22} className="text-black" />
+                            <span className="text-[10px] uppercase tracking-wider font-bold">{t("camera_btn") || "Camera"}</span>
+                        </button>
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            capture="user"
+                            className="hidden" 
+                            ref={cameraInputRef}
+                            onChange={handleImageUpload}
+                        />
+
+                        {/* Gallery Button */}
+                        <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex-1 bg-[#ffffff]/10 hover:bg-[#ffffff]/15 border border-[#ffffff]/10 rounded-xl py-3.5 flex flex-col items-center justify-center gap-1.5 transition-colors backdrop-blur-md"
+                        >
+                            <ImageIcon size={22} className="text-[#D4AF37]" />
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#F5F0E8]">{t("gallery")}</span>
+                        </button>
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                        />
+                    </div>
                 </div>
             </div>
         ) : (

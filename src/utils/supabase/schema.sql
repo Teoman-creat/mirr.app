@@ -8,6 +8,9 @@ CREATE TABLE public.profiles (
   avatar_url TEXT,
   aura_score INTEGER DEFAULT 0,
   style_dna JSONB DEFAULT '{}'::jsonb, -- e.g., { "vibe": "Minimalist", "color_palette": "Dark" }
+  country TEXT,
+  city TEXT,
+  district TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

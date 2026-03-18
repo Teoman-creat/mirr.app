@@ -15,12 +15,15 @@ export default function AnalyzePage() {
         const image = sessionStorage.getItem("mirr_image");
         const styleGoal = sessionStorage.getItem("mirr_style_goal");
 
+        const analysisType = sessionStorage.getItem("mirr_analysis_type") || "outfit";
+        const endpoint = analysisType === "grooming" ? "/api/analyze-grooming" : "/api/analyze";
+
         if (!image) {
           router.push(`/${locale}/upload`);
           return;
         }
 
-        const res = await fetch("/api/analyze", {
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image, styleGoal }),

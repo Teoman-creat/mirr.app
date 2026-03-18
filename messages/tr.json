@@ -38,7 +38,12 @@
     "gallery": "Galeri",
     "analyze_btn": "Stil DNA'sını İncele",
     "style_goal_label": "Stil Hedefi (Opsiyonel)",
-    "style_goal_placeholder": "Örn: İş görüşmesi, ilk buluşma, günlük..."
+    "style_goal_placeholder": "Örn: İş görüşmesi, ilk buluşma, günlük...",
+    "type_outfit": "Kıyafet",
+    "type_grooming": "Yüz & Saç Stili",
+    "take_face_photo": "Yüz Fotoğrafı",
+    "instruction_face": "Yüzünüzün ve saçınızın net göründüğü bir fotoğraf çekin.",
+    "camera_btn": "Kamera"
   },
   "Analyze": {
     "title": "Analiz Ediliyor",
@@ -83,7 +88,7 @@
     "title": "My Mirr",
     "tabs_wardrobe": "Gardırop",
     "tabs_evolution": "Gelişim",
-    "tabs_grooming": "Bakım",
+    "tabs_grooming": "Saç & Yüz",
     "aura_score": "Ort. Aura Puanı",
     "saved_looks": "Kaydedilenler",
     "style_dna": "Stil DNA",
@@ -96,7 +101,18 @@
     "view_all": "Tümünü Gör",
     "empty_recent": "Henüz analiz bulunamadı. Başlamak için bir fotoğraf yükleyin.",
     "evolution_coming_soon": "Stil Evrimi grafiği yakında burada olacak.",
-    "grooming_coming_soon": "Saç ve Bakım analizi yakında burada olacak."
+    "grooming_coming_soon": "Saç ve Bakım analizi yakında burada olacak.",
+    "edit_profile": "Profili Düzenle",
+    "edit_avatar": "Fotoğrafı Değiştir",
+    "edit_name": "Ad Soyad",
+    "edit_username": "Kullanıcı Adı",
+    "edit_vibe": "Stil Vibe",
+    "edit_country": "Ülke",
+    "edit_city": "Şehir",
+    "edit_district": "İlçe / Mahalle",
+    "save_changes": "Değişiklikleri Kaydet",
+    "cancel": "İptal",
+    "uploading": "Yükleniyor..."
   },
   "Community": {
     "title": "Topluluk Lensi",

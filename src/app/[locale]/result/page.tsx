@@ -1,20 +1,30 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Share, Sparkles, Flame, CheckCircle2, ChevronRight, User, X } from "lucide-react";
+import { ArrowLeft, Share, Sparkles, Flame, CheckCircle2, ChevronRight, User, X, LoaderCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 
 export default function ResultPage() {
   const [showContent, setShowContent] = useState(false);
   const [resultData, setResultData] = useState<{
-    auraScore: number;
+    // Outfit Specific
+    auraScore?: number;
+    strengths?: string[];
+    improvements?: string[];
+    // Grooming Specific
+    faceShape?: string;
+    hairRecommendations?: string[];
+    beardRecommendations?: string[];
+    skincareTips?: string[];
+    // Shared
     vibe: string;
-    strengths: string[];
-    improvements: string[];
   } | null>(null);
   
   const t = useTranslations("Result");
   const locale = useLocale();
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const data = sessionStorage.getItem("mirr_result_data");
@@ -29,10 +39,54 @@ export default function ResultPage() {
     setTimeout(() => setShowContent(true), 500);
   }, []);
 
-  const auraScore = resultData?.auraScore || 0;
+  const handleSave = async () => {
+    if (!resultData) return;
+    setIsSaving(true);
+    
+    try {
+      const imageData = sessionStorage.getItem("mirr_image");
+      
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: imageData,
+          parsedData: resultData,
+          type: sessionStorage.getItem("mirr_analysis_type") === "grooming" ? "GROOMING" : "OUTFIT"
+        }),
+      });
+
+      if (response.ok) {
+        // Successfully saved
+        router.push(`/${locale}/profile`);
+      } else {
+        const errorData = await response.json();
+        console.error('Error saving:', errorData);
+        alert('Kombin kaydedilirken bir hata oluştu.');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Kombin kaydedilirken bir hata oluştu.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const auraScore = resultData?.auraScore;
   const vibe = resultData?.vibe || "...";
+  
+  // Outfit
   const strengths = resultData?.strengths || [];
   const improvements = resultData?.improvements || [];
+  
+  // Grooming
+  const isGrooming = sessionStorage.getItem("mirr_analysis_type") === "grooming";
+  const faceShape = resultData?.faceShape || "Unknown";
+  const hairRecs = resultData?.hairRecommendations || [];
+  const beardRecs = resultData?.beardRecommendations || [];
+  const skinRecs = resultData?.skincareTips || [];
 
   return (
     <div className={`flex flex-col min-h-screen bg-[#0A0A0A] text-[#F5F0E8] relative overflow-x-hidden transition-opacity duration-1000 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
@@ -69,17 +123,28 @@ export default function ResultPage() {
             <div className="absolute w-64 h-64 border-[1px] border-dashed border-[#D4AF37]/30 rounded-full animate-[spin_30s_linear_infinite]" />
             <div className="absolute w-56 h-56 border-[2px] border-[#D4AF37]/10 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
             
-            <div className="w-48 h-48 rounded-full bg-[#1a1a1a]/80 backdrop-blur-xl border border-[#D4AF37]/40 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.15)] z-10">
-                <span className="text-sm font-medium tracking-widest uppercase text-[#D4AF37] mb-1">{t("score_label")}</span>
-                <div className="flex items-start">
-                    <span className="text-8xl font-serif tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-[#ffffff] to-[#C8C8C8]">
-                        {auraScore}
-                    </span>
-                 </div>
+            <div className="w-48 h-48 rounded-full bg-[#1a1a1a]/80 backdrop-blur-xl border border-[#D4AF37]/40 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.15)] z-10 p-4 text-center">
+                {isGrooming ? (
+                    <>
+                        <span className="text-xs font-medium tracking-widest uppercase text-[#D4AF37] mb-2">Face Shape</span>
+                        <span className="text-3xl font-serif tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-[#ffffff] to-[#C8C8C8]">
+                            {faceShape}
+                        </span>
+                    </>
+                ) : (
+                    <>
+                        <span className="text-sm font-medium tracking-widest uppercase text-[#D4AF37] mb-1">{t("score_label")}</span>
+                        <div className="flex items-start">
+                            <span className="text-8xl font-serif tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-[#ffffff] to-[#C8C8C8]">
+                                {auraScore}
+                            </span>
+                        </div>
+                    </>
+                )}
             </div>
             
             <div className="mt-8 text-center animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                <p className="text-[#C8C8C8] text-sm uppercase tracking-widest mb-1">{t("vibe_label")}</p>
+                <p className="text-[#C8C8C8] text-sm uppercase tracking-widest mb-1">{isGrooming ? "Grooming Vibe" : t("vibe_label")}</p>
                 <h2 className="text-2xl font-serif text-[#F5F0E8]">{vibe}</h2>
             </div>
         </section>
@@ -87,55 +152,117 @@ export default function ResultPage() {
         {/* Breakdown Cards */}
         <section className="space-y-6">
             
-            {/* Strengths Card */}
-            <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <Flame size={16} className="text-green-400" />
+            {!isGrooming ? (
+                <>
+                    {/* Strengths Card */}
+                    <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                                <Flame size={16} className="text-green-400" />
+                            </div>
+                            <h3 className="text-lg font-medium tracking-wide">{t("strengths_title")}</h3>
+                        </div>
+                        <ul className="space-y-4">
+                            {strengths.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
+                                    <CheckCircle2 size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                    <h3 className="text-lg font-medium tracking-wide">{t("strengths_title")}</h3>
-                </div>
-                <ul className="space-y-4">
-                    {strengths.map((item, i) => (
-                        <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
-                            <CheckCircle2 size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />
-                            <span>{item}</span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
 
-            {/* Improvements Card */}
-            <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                        <Sparkles size={16} className="text-blue-400" />
+                    {/* Improvements Card */}
+                    <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                <Sparkles size={16} className="text-blue-400" />
+                            </div>
+                            <h3 className="text-lg font-medium tracking-wide">{t("improvements_title")}</h3>
+                        </div>
+                        <ul className="space-y-4">
+                            {improvements.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0 mt-2" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                    <h3 className="text-lg font-medium tracking-wide">{t("improvements_title")}</h3>
-                </div>
-                <ul className="space-y-4">
-                    {improvements.map((item, i) => (
-                        <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0 mt-2" />
-                            <span>{item}</span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+                </>
+            ) : (
+                <>
+                   {/* Hair Card */}
+                   <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-8 h-8 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                                <Sparkles size={16} className="text-[#D4AF37]" />
+                            </div>
+                            <h3 className="text-lg font-medium tracking-wide">Hair Recommendations</h3>
+                        </div>
+                        <ul className="space-y-4">
+                            {hairRecs.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0 mt-2" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Beard Card */}
+                    <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-8 h-8 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                                <Flame size={16} className="text-[#D4AF37]" />
+                            </div>
+                            <h3 className="text-lg font-medium tracking-wide">Beard & Stubble</h3>
+                        </div>
+                        <ul className="space-y-4">
+                            {beardRecs.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0 mt-2" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    
+                    {/* Skin Card */}
+                    {skinRecs.length > 0 && (
+                        <div className="bg-[#ffffff]/5 rounded-3xl p-6 border border-[#ffffff]/10 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '1.0s' }}>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                                    <CheckCircle2 size={16} className="text-[#D4AF37]" />
+                                </div>
+                                <h3 className="text-lg font-medium tracking-wide">Skincare Tips</h3>
+                            </div>
+                            <ul className="space-y-4">
+                                {skinRecs.map((item, i) => (
+                                    <li key={i} className="flex gap-3 text-[#C8C8C8] text-sm leading-relaxed">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0 mt-2" />
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* Save to Wardrobe Action */}
-            <Link href={`/${locale}/profile`} className="w-full mt-4 bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] border border-[#ffffff]/10 rounded-2xl p-5 flex items-center justify-between group hover:bg-[#2a2a2a] transition-all animate-fade-in-up block" style={{ animationDelay: '1s' }}>
+            <button onClick={handleSave} disabled={isSaving} className="w-full mt-4 bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] border border-[#ffffff]/10 rounded-2xl p-5 flex items-center justify-between group hover:bg-[#2a2a2a] transition-all animate-fade-in-up block text-left" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-[#0A0A0A] flex items-center justify-center border border-[#ffffff]/5 group-hover:border-[#D4AF37]/30 transition-colors">
-                        <User size={20} className="text-[#D4AF37]" />
+                        {isSaving ? <LoaderCircle size={20} className="text-[#D4AF37] animate-spin" /> : <User size={20} className="text-[#D4AF37]" />}
                     </div>
                     <div className="text-left">
-                        <p className="font-medium text-[#F5F0E8]">{t("save_btn")}</p>
+                        <p className="font-medium text-[#F5F0E8]">{isSaving ? t("save_btn") + "..." : t("save_btn")}</p>
                         <p className="text-xs text-[#C8C8C8]/60 mt-0.5">{t("save_desc")}</p>
                     </div>
                 </div>
                 <ChevronRight size={20} className="text-[#C8C8C8]/40 group-hover:text-[#D4AF37] group-hover:translate-x-1 transition-all" />
-            </Link>
+            </button>
 
         </section>
       </main>
