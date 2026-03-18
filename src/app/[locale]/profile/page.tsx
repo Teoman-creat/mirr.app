@@ -138,7 +138,7 @@ export default function ProfilePage() {
         .upsert({
           id: user.id,
           full_name: editForm.full_name,
-          username: editForm.username,
+          username: editForm.username?.trim() || null,
           avatar_url: newAvatarUrl,
           style_dna: styleDna,
           country: editForm.country,
@@ -148,7 +148,11 @@ export default function ProfilePage() {
 
       if (updateError) {
         console.error("Update error:", updateError);
-        alert("Profil kaydedilemedi: " + updateError.message);
+        if (updateError.message.includes("profiles_username_key")) {
+          alert("Bu kullanıcı adı başkası tarafından alınmış. Lütfen başka bir kullanıcı adı seçin.");
+        } else {
+          alert("Profil kaydedilemedi: " + updateError.message);
+        }
       } else {
         setUserProfile((prev: any) => ({
           ...prev,
