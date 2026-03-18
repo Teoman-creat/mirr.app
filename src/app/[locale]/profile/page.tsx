@@ -143,8 +143,7 @@ export default function ProfilePage() {
           style_dna: styleDna,
           country: editForm.country,
           city: editForm.city,
-          district: editForm.district,
-          updated_at: new Date().toISOString()
+          district: editForm.district
         }, { onConflict: 'id' });
 
       if (updateError) {
