@@ -1,30 +1,95 @@
 "use client";
-import React, { useState } from "react";
-import { ArrowLeft, Flame, Frown, MessageSquare, TrendingUp, Search } from "lucide-react";
+
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Search, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
+import { toast } from "react-toastify";
+import RunwayCard from "@/components/Community/RunwayCard";
+import LeaderboardList from "@/components/Community/LeaderboardList";
 
 export default function CommunityPage() {
   const t = useTranslations("Community");
   const locale = useLocale();
   const [activeTab, setActiveTab] = useState<"feed" | "leaderboard">("feed");
-  const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
+  
+  const [feedPosts, setFeedPosts] = useState<any[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [currentPostIndex, setCurrentPostIndex] = useState(0);
 
-  // Mock Feed Data
-  const profiles = [
-    { id: 1, image: "https://images.unsplash.com/photo-1544265727-bb0364e52504?w=600&q=80", score: 94 },
-    { id: 2, image: "https://images.unsplash.com/photo-1550614000-4b95d4660eb9?w=600&q=80", score: 88 },
-    { id: 3, image: "https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=600&q=80", score: 76 },
-  ];
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [lbCategory, setLbCategory] = useState("all");
+  const [lbTimeframe, setLbTimeframe] = useState("all");
 
-  const handleRate = () => {
-     // Animate out and move to next profile
-     if (currentProfileIndex < profiles.length) {
-         setCurrentProfileIndex(prev => prev + 1);
-     }
+  useEffect(() => {
+    fetchFeed();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "leaderboard") {
+      fetchLeaderboard(lbCategory, lbTimeframe);
+    }
+  }, [activeTab, lbCategory, lbTimeframe]);
+
+  const fetchFeed = async () => {
+    try {
+      setFeedLoading(true);
+      const res = await fetch('/api/community/feed');
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      // Filter out posts we've already voted on, optionally
+      const unvoted = data.posts?.filter((p: any) => !p.user_vote) || [];
+      setFeedPosts(unvoted);
+    } catch (error) {
+      console.error("Error fetching feed:", error);
+      toast.error("Bağlantı hatası oluştu.");
+    } finally {
+      setFeedLoading(false);
+    }
   };
 
-  const currentProfile = profiles[currentProfileIndex];
+  const fetchLeaderboard = async (category: string, timeframe: string) => {
+    try {
+      setLeaderboardLoading(true);
+      const res = await fetch(`/api/community/leaderboard?category=${category}&timeframe=${timeframe}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      setLeaderboard(data.leaderboard || []);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
+  const handleVote = async (postId: string, score: number | null, reaction: string | null) => {
+    try {
+      const res = await fetch('/api/community/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: postId, score, reaction })
+      });
+      const data = await res.json();
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+      
+      // Move to next post after a short delay for animation
+      setTimeout(() => {
+        setCurrentPostIndex(prev => prev + 1);
+      }, 500);
+
+    } catch (error) {
+      console.error("Error voting:", error);
+      toast.error("Oy gönderilemedi.");
+    }
+  };
+
+  const currentPost = feedPosts[currentPostIndex];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-[#F5F0E8] relative overflow-hidden pb-24">
@@ -37,7 +102,7 @@ export default function CommunityPage() {
              <Link href={`/${locale}`} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors">
                 <ArrowLeft size={18} className="text-[#C8C8C8]" />
              </Link>
-             <h1 className="text-sm font-semibold tracking-widest uppercase text-[#F5F0E8]">{t("title")}</h1>
+             <h1 className="text-sm font-semibold tracking-widest uppercase text-[#F5F0E8]">{t("title") || "Community"}</h1>
              <div className="w-10 h-10" /> {/* Spacer */}
          </div>
 
@@ -47,111 +112,59 @@ export default function CommunityPage() {
                 onClick={() => setActiveTab("feed")}
                 className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all ${activeTab === 'feed' ? 'bg-[#D4AF37] text-black shadow-md' : 'text-[#C8C8C8] hover:text-white'}`}
              >
-                 {t("toggle_feed")}
+                 {t("the_runway")}
              </button>
              <button 
                 onClick={() => setActiveTab("leaderboard")}
                 className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all ${activeTab === 'leaderboard' ? 'bg-[#D4AF37] text-black shadow-md' : 'text-[#C8C8C8] hover:text-white'}`}
              >
-                 {t("toggle_leaderboard")}
+                 {t("hall_of_fame")}
              </button>
          </div>
       </header>
 
-      <main className="flex-1 flex flex-col z-10 px-6 pt-6 max-w-md mx-auto w-full relative">
+      <main className="flex-1 flex flex-col z-10 px-6 pt-6 mx-auto w-full max-w-2xl relative">
         
         {activeTab === "feed" && (
-            <div className="flex-1 flex flex-col items-center justify-center">
-                {currentProfile ? (
-                    <div className="w-full relative animate-fade-in-up">
-                        {/* Feed Card */}
-                        <div className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border border-[#ffffff]/10 bg-[#1a1a1a]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={currentProfile.image} alt="Anonymous look" className="w-full h-full object-cover" />
-                            
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
-                            
-                            {/* Card Content & Actions */}
-                            <div className="absolute bottom-0 w-full p-6 flex flex-col gap-6">
-                                {/* Score Badge */}
-                                <div className="self-start px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-[#D4AF37]/30 flex items-center gap-1.5">
-                                    <TrendingUp size={14} className="text-[#D4AF37]" />
-                                    <span className="text-xs font-bold text-[#F5F0E8]">{currentProfile.score} Aura</span>
-                                </div>
-                                
-                                {/* Action Buttons - Redesigned for more diversity */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-orange-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
-                                        <Flame size={18} className="text-orange-400 group-hover:fill-orange-400 transition-colors" />
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_fire") || "Ateş"}</span>
-                                    </button>
-
-                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-purple-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
-                                        <TrendingUp size={18} className="text-purple-400 transition-colors" />
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">Trend</span>
-                                    </button>
-                                    
-                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-blue-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
-                                        <div className="w-4 h-4 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">İkonik</span>
-                                    </button>
-
-                                    <button onClick={handleRate} className="flex items-center justify-center gap-2 py-3 bg-[#ffffff]/10 hover:bg-gray-500/20 backdrop-blur-md rounded-2xl border border-[#ffffff]/20 transition-all active:scale-95 group">
-                                        <Frown size={18} className="text-gray-400" />
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">{t("rate_btn_meh") || "İdare Eder"}</span>
-                                    </button>
-                                </div>
-                                
-                                {/* Notes Section */}
-                                <div className="mt-2 text-center w-full">
-                                    <button onClick={() => {
-                                        const noteSection = document.getElementById('note-section');
-                                        if (noteSection) noteSection.classList.toggle('hidden');
-                                    }} className="w-full py-3 flex items-center justify-center gap-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] rounded-xl border border-[#D4AF37]/30 transition-colors">
-                                        <MessageSquare size={16} />
-                                        <span className="text-xs font-semibold tracking-wide">Stil Notu Bırak</span>
-                                    </button>
-                                    
-                                    <div id="note-section" className="hidden mt-3 text-left animate-fade-in">
-                                        <textarea 
-                                            placeholder="Bu kombin hakkında ne düşünüyorsun? İlham verici detaylar..." 
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-[#F5F0E8] placeholder:text-white/30 focus:outline-none focus:border-[#D4AF37]/50 min-h-[80px] resize-none"
-                                        />
-                                        <button onClick={handleRate} className="w-full mt-2 py-2 bg-[#D4AF37] text-black font-semibold rounded-lg text-sm hover:opacity-90 transition-opacity">
-                                            Gönder ve Geç
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div className="flex-1 flex flex-col items-center justify-center w-full">
+                {feedLoading ? (
+                  <div className="flex items-center justify-center p-20">
+                    <LoaderCircle size={40} className="animate-spin text-[#D4AF37]" />
+                  </div>
+                ) : currentPost ? (
+                  <div className="w-full relative animate-fade-in-up">
+                    <RunwayCard 
+                      post={currentPost} 
+                      onVote={handleVote} 
+                    />
+                  </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 animate-fade-in">
-                        <div className="w-20 h-20 rounded-full bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 mb-4 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
-                            <Search size={32} className="text-[#D4AF37]/50" />
-                        </div>
-                        <h3 className="text-xl font-serif text-[#F5F0E8]">{t("no_more_profiles") || "Tüm Stiller Tamamlandı"}</h3>
-                        <p className="text-[#C8C8C8] text-sm font-light">Daha fazla ilham için daha sonra tekrar kontrol edin.</p>
-                    </div>
+                  <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 animate-fade-in w-full max-w-sm mx-auto bg-white/5 p-8 rounded-3xl border border-white/10">
+                      <div className="w-20 h-20 rounded-full bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 mb-2 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                          <Search size={32} className="text-[#D4AF37]/50" />
+                      </div>
+                      <h3 className="text-xl font-serif text-[#F5F0E8]">{t("no_more_profiles")}</h3>
+                      <p className="text-[#C8C8C8] text-sm font-light leading-relaxed">Oy verilecek yeni kombin kalmadı. Kendi stilinizi paylaşın veya daha sonra tekrar dönün.</p>
+                      
+                      <button onClick={fetchFeed} className="mt-4 px-6 py-2 rounded-full border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-semibold uppercase tracking-wider hover:bg-[#D4AF37]/10 transition-colors">
+                        Yenile
+                      </button>
+                  </div>
                 )}
             </div>
         )}
 
         {activeTab === "leaderboard" && (
-            <div className="w-full flex flex-col gap-4 animate-fade-in">
-                {profiles.map((profile, i) => (
-                    <div key={i} className="flex items-center gap-4 bg-[#ffffff]/5 p-3 rounded-2xl border border-[#ffffff]/10">
-                        <span className={`text-lg font-serif font-bold ${i === 0 ? 'text-[#D4AF37]' : i === 1 ? 'text-[#C8C8C8]' : 'text-orange-900'}`}>#{i + 1}</span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={profile.image} alt="Leaderboard" className="w-16 h-16 rounded-xl object-cover" />
-                        <div className="flex-1">
-                            <span className="text-sm font-bold block">Anonymous {profile.id}</span>
-                            <span className="text-xs text-[#C8C8C8]">{profile.score} Aura</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
+           <LeaderboardList 
+              entries={leaderboard}
+              isLoading={leaderboardLoading}
+              currentCategory={lbCategory}
+              currentTimeframe={lbTimeframe}
+              onFilterChange={(cat, tf) => {
+                setLbCategory(cat);
+                setLbTimeframe(tf);
+              }}
+           />
         )}
 
       </main>

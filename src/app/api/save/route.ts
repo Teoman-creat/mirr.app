@@ -58,7 +58,7 @@ export async function POST(req: Request) {
           : "Yüz hatlarınıza özel stil önerisi.";
     }
 
-    const { error: dbError } = await supabase.from('analyses').insert({
+    const { data: insertedData, error: dbError } = await supabase.from('analyses').insert({
         user_id: user.id,
         image_url: imageUrl,
         type: type,
@@ -68,14 +68,14 @@ export async function POST(req: Request) {
         strengths: type === 'OUTFIT' ? parsedData.strengths : parsedData.hairRecommendations, // Reuse columns for now or rely entirely on raw_ai_response
         improvements: type === 'OUTFIT' ? parsedData.improvements : parsedData.beardRecommendations,
         raw_ai_response: parsedData
-    });
+    }).select('id').single();
     
     if (dbError) {
         console.error("Error saving to database:", dbError);
         return NextResponse.json({ error: 'Failed to save analysis' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, analysis_id: insertedData?.id });
 
   } catch (error: any) {
     console.error('Save result API error:', error);

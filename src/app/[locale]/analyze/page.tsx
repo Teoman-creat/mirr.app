@@ -16,7 +16,7 @@ export default function AnalyzePage() {
         const styleGoal = sessionStorage.getItem("mirr_style_goal");
 
         const analysisType = sessionStorage.getItem("mirr_analysis_type") || "outfit";
-        const endpoint = analysisType === "grooming" ? "/api/analyze-grooming" : "/api/analyze";
+        const endpoint = "/api/analyze";
 
         if (!image) {
           router.push(`/${locale}/upload`);

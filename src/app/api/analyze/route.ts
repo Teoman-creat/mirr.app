@@ -6,7 +6,8 @@ export const maxDuration = 30; // Serverless function timeout
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { image, styleGoal } = body;
+    const { image, styleGoal, type } = body;
+    const isGrooming = type === 'grooming';
 
     if (!image) {
       return new Response(JSON.stringify({ error: 'No image provided' }), { 
@@ -15,12 +16,28 @@ export async function POST(req: Request) {
       });
     }
 
-    const systemInstruction = `Sen ünlü bir 'Yapay Zeka Senior Moda Danışmanı'sın (AI Senior Fashion Consultant).
-Kullanıcının yüklediği fotoğraftaki kıyafeti ve stili detaylı bir şekilde analiz etmen gerekiyor.
-Öncelikle fotoğraftaki objeleri (kıyafet parçaları, renkler, kesimler, aksesuarlar) tespit et, sonra bu objelerin birbiriyle uyumunu analiz et.
-${styleGoal ? `\nÖNEMLİ: Kullanıcının bu kıyafet için belirttiği özel 'Stil Hedefi' (Style Goal): "${styleGoal}". Analizini bu hedefe uyum bağlamında değerlendir ve hedefi tutturup tutturmadığını eleştirilerinde belirt.` : ''}
+    const outfitInstruction = `Sen kullanıcının en yakın arkadaşı gibi davranan, pratik ve doğal konuşan profesyonel bir dijital stilistisin.
+Kullanıcının yüklediği kıyafeti veya görünümü analiz et. Eksik parçalar varsa (örneğin sadece üst giyim varsa) alt giyim (pantolon, etek vb.) tavsiyesinde bulun.
+${styleGoal ? `\nÖNEMLİ: Kullanıcının "Hedefi": "${styleGoal}". Buna göre nokta atışı yorumlar yap.` : ''}
 
-Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı eleştiriler sun. Moda terimleri kullanarak profesyonel konuş.`;
+KURALLAR:
+1. Moda jargonu yerine herkesin anlayabileceği gündelik ve anlaşılır bir dil kullan.
+2. Tavsiyelerin detaylı ve spesifik olsun! Sadece "gömlek giy" demek yerine gömleğin rengini, desenini, kol boyunu (kısa kol, uzun kol) ve pantolon/etek eşleştirmesini mutlaka belirt.
+3. Mutlaka en az 2 detaylı olumlu yön (strengths) ve en az 3 spesifik, pratik tavsiye (improvements) üret! Boş bırakma.
+4. Renk uyumlarına dikkat et ve önereceğin alternatif kıyafetlerin kesin renklerini ve tarzlarını (örn: "koyu lacivert keten pantolon", "kısa kollu beyaz basic tişört") açıkça vurgula.`;
+
+
+    const groomingInstruction = `Sen kullanıcının kişisel berberi ve cilt bakım uzmanı gibi davranan, samimi ve pratik konuşan bir danışmansın.
+Kullanıcının yüklediği yüz fotoğrafını inceleyerek SAÇ KESİMİ, SAKAL ve YÜZ/CİLT hakkında analiz yap.
+${styleGoal ? `\nÖNEMLİ: Kullanıcının "Hedefi": "${styleGoal}".` : ''}
+
+KURALLAR:
+1. Karmaşık dermatoloji veya kozmetik terimlerine girmeden basit konuş.
+2. ÇOK KISA ve ÖZ ol.
+3. Mutlaka en az 2 olumlu yön (strengths) ve en az 2 net tavsiye (improvements) üret! Boş bırakma.
+4. Yüz şekline göre net öneriler ver (Örn: "Yanları kısa kestir, yüzün ince görünür", "Sakallarını biraz toparlamalısın", "Yüzün kuru duruyor, nemlendirici sür").`;
+
+    const systemInstruction = isGrooming ? groomingInstruction : outfitInstruction;
 
     const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
     let mimeType = "image/jpeg";
@@ -67,15 +84,23 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
                         type: SchemaType.STRING,
                         description: "Genel Stil Özeti (Vibe): Kıyafetin genel havasını özetleyen karizmatik bir başlık veya kısa tanım (Örn: \"Zarif Minimalizm\")."
                     },
+                    faceShape: {
+                        type: SchemaType.STRING,
+                        description: "SADECE YÜZ ANALİZİNDE: Yüz şekli (Örn: 'Oval', 'Köşeli', 'Kalp', 'Yuvarlak'). Kıyafet analiziyse boş bırak."
+                    },
                     strengths: {
                         type: SchemaType.ARRAY,
                         items: { type: SchemaType.STRING },
-                        description: "Renk Raporu, Silüet & Oran ve Detay & Aksesuar kısımlarındaki güçlü/olumlu yönler. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                        description: isGrooming 
+                            ? "Fotoğraftaki saçı, sakalı veya cildiyle ilgili en iyi 2 yönü. Sadece 1 cümlelik, aşırı basit, günlük ifadeler."
+                            : "Kombindeki en iyi özellikler. Renk uyumu, parça seçimi gibi detayları belirten, açıklayıcı ve samimi dilde övgüler. (Örn: 'Ceketinin rengi ten renginle harika uyum sağlamış'). En az 2 madde."
                     },
                     improvements: {
                         type: SchemaType.ARRAY,
                         items: { type: SchemaType.STRING },
-                        description: "Alternatif Reçete veya eleştirel kısımlar: Nasıl daha iyi olabilirdi? Gelişim alanları. Her biri 1-2 cümlelik 2 ile 4 adet madde."
+                        description: isGrooming
+                            ? "Saç, sakal veya cilt için ne yapması gerektiğine dair çok çok basit 2 tavsiye (Örn: 'Saçını biraz kısalt')."
+                            : "Kıyafeti için oldukça spesifik ve detaylı tavsiyeler. Eksik parçalar için pantolon/etek önerisi yap, renkleri ve kol boyu (kısa/uzun) gibi detayları MUTLAKA belirt (Örn: 'Bu gömleğin altına koyu lacivert, dar kesim bir kot pantolon çok iyi gider', 'Üstüne kısa kollu, açık mavi bir keten gömlek deneyebilirsin'). En az 3 madde."
                     }
                 },
                 required: ["auraScore", "vibe", "strengths", "improvements"]
@@ -141,7 +166,7 @@ Lütfen puanlamada objektif ol, gerektiğinde acımasız ama her zaman yapıcı 
                 const { error: dbError } = await supabase.from('analyses').insert({
                     user_id: user.id,
                     image_url: imageUrl,
-                    type: "OUTFIT",
+                    type: isGrooming ? "GROOMING" : "OUTFIT",
                     aura_score: parsedData.auraScore,
                     vibe: parsedData.vibe, // explicitly save vibe
                     reasoning: reasoning, // explicitly save reasoning for the profile card

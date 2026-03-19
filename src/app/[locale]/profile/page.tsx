@@ -1,14 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, User, Grid, TrendingUp, Scissors, Sparkles, Plus, LoaderCircle, Edit2 } from "lucide-react";
+import { ArrowLeft, User, Grid, TrendingUp, Scissors, Sparkles, Plus, LoaderCircle, Edit2, Share2, ArrowRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ProfilePage() {
   const t = useTranslations("Profile");
+  const tResult = useTranslations("Result");
   const locale = useLocale();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("wardrobe");
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -21,6 +24,46 @@ export default function ProfilePage() {
   const [editForm, setEditForm] = useState({ full_name: "", username: "", vibe: "", country: "", city: "", district: "" });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Publish States
+  const [publishingAnalysisId, setPublishingAnalysisId] = useState<string | null>(null);
+  const [publishCategory, setPublishCategory] = useState("streetwear");
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const pathname = usePathname();
+  const [showSettings, setShowSettings] = useState(false);
+  const [ghostMode, setGhostMode] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+  const [fitPref, setFitPref] = useState('regular');
+  const [archetype, setArchetype] = useState('versatile');
+
+  const changeLanguage = (newLocale: string) => {
+     let newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
+     if (newPath === pathname) { // the prefix wasn't there
+       newPath = `/${newLocale}${pathname === '/' ? '' : pathname}`;
+     }
+     router.push(newPath);
+  };
+
+  const saveSettings = async () => {
+    try {
+      const supabase = createClient();
+      const newStyleDna = { ...(userProfile?.style_dna || {}), ghost_mode: ghostMode, fit: fitPref, archetype };
+      const { error } = await supabase.from('profiles').update({
+         style_dna: newStyleDna,
+         is_public: isPublic
+      }).eq('id', userProfile?.id);
+      
+      if (!error) {
+        setUserProfile({ ...userProfile, style_dna: newStyleDna, is_public: isPublic });
+        setShowSettings(false);
+      } else {
+        alert("Failed to save settings: " + error.message);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -46,6 +89,11 @@ export default function ProfilePage() {
             username: profileData?.username || meta.preferred_username || "",
             style_dna: profileData?.style_dna || {}
           });
+
+          setIsPublic(profileData?.is_public || false);
+          setGhostMode(profileData?.style_dna?.ghost_mode || false);
+          setFitPref(profileData?.style_dna?.fit || 'regular');
+          setArchetype(profileData?.style_dna?.archetype || 'versatile');
 
           setEditForm({
             full_name: profileData?.full_name || fallbackName,
@@ -164,6 +212,9 @@ export default function ProfilePage() {
           city: editForm.city,
           district: editForm.district
         }));
+        setGhostMode(styleDna?.ghost_mode || false);
+        setFitPref(styleDna?.fit || 'regular');
+        setArchetype(styleDna?.archetype || 'versatile');
         setIsEditing(false);
       }
     } catch (error: any) {
@@ -171,6 +222,40 @@ export default function ProfilePage() {
         alert("Bilinmeyen bir hata oluştu: " + (error?.message || String(error)));
     } finally {
         setIsSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!publishingAnalysisId) return;
+    setIsPublishing(true);
+    try {
+      const res = await fetch('/api/community/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analysis_id: publishingAnalysisId, category: publishCategory })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Topluluğa başarıyla gönderildi!");
+        setPublishingAnalysisId(null);
+      } else {
+        alert("Hata: " + (data.error || "Bilinmeyen hata"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Gönderilirken bir hata oluştu.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push(`/${locale}/login`);
+    } catch (e) {
+      console.error("Logout error", e);
     }
   };
 
@@ -185,7 +270,21 @@ export default function ProfilePage() {
             <ArrowLeft size={18} className="text-[#C8C8C8]" />
          </Link>
          <h1 className="text-sm font-semibold tracking-widest uppercase text-[#F5F0E8]">{t("title")}</h1>
-         <div className="w-10 h-10" /> {/* Spacer */}
+         <div className="flex gap-2">
+           <button 
+             onClick={() => setShowSettings(true)} 
+             className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-[#D4AF37]/20 hover:text-[#D4AF37] transition-colors text-[#C8C8C8]"
+           >
+              <Settings size={16} />
+           </button>
+           <button 
+             onClick={handleLogout} 
+             title={t("logout")} 
+             className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-[#ff4b4b]/20 hover:text-[#ff4b4b] hover:border-[#ff4b4b]/50 transition-colors text-[#C8C8C8]"
+           >
+              <LogOut size={16} />
+           </button>
+         </div>
       </header>
 
       <main className="flex-1 flex flex-col z-10 px-6 pt-6 max-w-2xl mx-auto w-full">
@@ -236,6 +335,23 @@ export default function ProfilePage() {
                 </div>
             </div>
         </section>
+
+        {/* Explore Community Banner */}
+        <Link href={`/${locale}/community`} className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 rounded-3xl p-5 mb-8 backdrop-blur-sm relative overflow-hidden group flex items-center justify-between transition-all hover:bg-[#D4AF37]/20">
+            <div className="absolute right-0 top-0 w-32 h-32 bg-[#D4AF37]/10 blur-[40px] rounded-full pointer-events-none" />
+            <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-[#0A0A0A] flex items-center justify-center border border-[#D4AF37]/20 group-hover:border-[#D4AF37]/50 transition-colors shadow-lg shadow-[#D4AF37]/10">
+                    <Sparkles size={20} className="text-[#D4AF37]" />
+                </div>
+                <div className="text-left">
+                    <h3 className="text-lg font-serif text-[#F5F0E8] flex items-center gap-2">{t("explore_community")}</h3>
+                    <p className="text-xs text-[#C8C8C8]/80 mt-1">{t("explore_community_desc")}</p>
+                </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-black/40 border border-white/5 flex items-center justify-center group-hover:bg-[#D4AF37] transition-colors relative z-10">
+                <ArrowRight size={18} className="text-[#D4AF37] group-hover:text-black" />
+            </div>
+        </Link>
 
         {/* Custom Tabs */}
         <nav className="flex gap-2 p-1.5 bg-[#ffffff]/5 rounded-2xl mb-6 backdrop-blur-md border border-[#ffffff]/10">
@@ -296,8 +412,17 @@ export default function ProfilePage() {
                                     {/* Base Gradient for metrics */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-40 transition-opacity" />
                                     
+                                    {/* Share Button (Top Right) */}
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setPublishingAnalysisId(analysis.id); }}
+                                      className="absolute top-3 right-3 z-20 p-2 bg-black/50 backdrop-blur-md rounded-full border border-white/20 text-white hover:bg-[#D4AF37] hover:text-black hover:border-[#D4AF37] transition-all shadow-lg"
+                                      title="Topluluğa Gönder"
+                                    >
+                                      <Share2 size={16} />
+                                    </button>
+
                                     {/* Default View: Score & Time */}
-                                    <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end group-hover:opacity-0 transition-opacity duration-300">
+                                    <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end group-hover:opacity-0 transition-opacity duration-300 z-10">
                                         <div className="flex items-center gap-1.5 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg border border-[#D4AF37]/20">
                                             <Sparkles size={12} className="text-[#D4AF37]" />
                                             <span className="text-xs font-bold text-[#F5F0E8]">{analysis.aura_score || '-'}</span>
@@ -306,9 +431,9 @@ export default function ProfilePage() {
                                     </div>
 
                                     {/* Hover Overlay: Vibe & Comments */}
-                                    <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-center">
+                                    <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-center z-10 pointer-events-none">
                                         <h4 className="text-[#D4AF37] font-semibold text-sm mb-2 uppercase tracking-wide">{analysis.vibe || 'Style DNA'}</h4>
-                                        <p className="text-[#F5F0E8] text-xs leading-relaxed line-clamp-6 italic">
+                                        <p className="text-[#F5F0E8] text-xs leading-relaxed line-clamp-4 italic mb-4">
                                             "{analysis.reasoning || 'Otantik bir stil yansıması.'}"
                                         </p>
                                     </div>
@@ -408,7 +533,7 @@ export default function ProfilePage() {
             {activeTab === 'grooming' && (
                 <div className="space-y-4 animate-fade-in">
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-sm font-medium tracking-wide text-[#C8C8C8]">Recent Grooming Analyses</h3>
+                        <h3 className="text-sm font-medium tracking-wide text-[#C8C8C8]">{t("recent_grooming")}</h3>
                     </div>
                     
                     {loading ? (
@@ -418,8 +543,8 @@ export default function ProfilePage() {
                     ) : groomingAnalyses.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-48 text-center border border-dashed border-[#ffffff]/10 rounded-3xl bg-[#ffffff]/2">
                             <Scissors size={24} className="text-[#D4AF37]/50 mb-3" />
-                            <p className="text-sm text-[#C8C8C8]">No grooming scans yet.</p>
-                            <Link href={`/${locale}/upload`} className="mt-3 text-xs text-[#D4AF37] hover:underline">Scan your face now</Link>
+                            <p className="text-sm text-[#C8C8C8]">{t("grooming_empty")}</p>
+                            <Link href={`/${locale}/upload?type=grooming`} className="mt-3 text-xs text-[#D4AF37] hover:underline">{t("scan_grooming")}</Link>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4">
@@ -435,18 +560,33 @@ export default function ProfilePage() {
                                     
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-40 transition-opacity" />
                                     
-                                    <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end group-hover:opacity-0 transition-opacity duration-300">
+                                    {/* Share Button (Top Right) */}
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setPublishingAnalysisId(analysis.id); }}
+                                      className="absolute top-3 right-3 z-20 p-2 bg-black/50 backdrop-blur-md rounded-full border border-white/20 text-white hover:bg-[#D4AF37] hover:text-black hover:border-[#D4AF37] transition-all shadow-lg"
+                                      title="Topluluğa Gönder"
+                                    >
+                                      <Share2 size={16} />
+                                    </button>
+
+                                    <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end group-hover:opacity-0 transition-opacity duration-300 z-10">
                                         <div className="flex flex-col">
                                             <span className="text-xs font-bold text-[#D4AF37] uppercase">{analysis.vibe || 'Face Shape'}</span>
                                         </div>
                                         <span className="text-[10px] text-[#C8C8C8]/80">{getRelativeTime(analysis.created_at)}</span>
                                     </div>
 
-                                    <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-center">
-                                        <h4 className="text-[#D4AF37] font-semibold text-xs mb-1 uppercase tracking-wide">AI Notes</h4>
-                                        <p className="text-[#F5F0E8] text-[10px] leading-relaxed line-clamp-6">
+                                    <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-center z-10 pointer-events-none">
+                                        <h4 className="text-[#D4AF37] font-semibold text-xs mb-1 uppercase tracking-wide">{tResult("ai_notes")}</h4>
+                                        <p className="text-[#F5F0E8] text-[10px] leading-relaxed line-clamp-4 mb-3">
                                             {analysis.reasoning || 'Looks great!'}
                                         </p>
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); setPublishingAnalysisId(analysis.id); }}
+                                          className="w-full mt-auto py-1.5 bg-[#D4AF37]/20 hover:bg-[#D4AF37]/40 text-[#D4AF37] border border-[#D4AF37]/50 rounded-lg text-[10px] font-bold transition-colors shadow-lg shadow-[#D4AF37]/10"
+                                        >
+                                          {tResult("publish_community")}
+                                        </button>
                                     </div>
                                 </div>
                             )})}
@@ -526,6 +666,140 @@ export default function ProfilePage() {
                 {isSaving ? t("uploading") : t("save_changes")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {publishingAnalysisId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#0A0A0A] border border-[#D4AF37]/30 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl relative">
+            {/* Glow effect */}
+            <div className="absolute top-[-50%] right-[-10%] w-32 h-32 bg-[#D4AF37]/20 blur-[50px] rounded-full pointer-events-none" />
+            
+            <div className="p-6 border-b border-white/5 relative z-10">
+              <h3 className="text-xl font-serif text-[#F5F0E8] flex items-center gap-2">
+                <Sparkles className="text-[#D4AF37]" size={20} />
+                {tResult("hit_runway")}
+              </h3>
+              <p className="text-xs text-[#C8C8C8] mt-2">{tResult("hit_runway_desc")}</p>
+            </div>
+            
+            <div className="p-6 space-y-4 relative z-10">
+              <label className="block text-xs font-bold text-[#D4AF37] mb-3 uppercase tracking-widest text-center">{tResult("select_category")}</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'streetwear', label: tResult("cat_streetwear") },
+                  { id: 'formal', label: tResult("cat_formal") },
+                  { id: 'casual', label: tResult("cat_casual") },
+                  { id: 'date_night', label: tResult("cat_date_night") },
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setPublishCategory(cat.id)}
+                    className={`py-4 px-2 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center ${publishCategory === cat.id ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)] scale-105' : 'bg-white/5 border-white/10 text-[#C8C8C8] hover:bg-white/10 hover:border-white/20'}`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-white/5 flex gap-3 bg-[#0a0a0a]/90 relative z-10">
+              <button disabled={isPublishing} onClick={() => setPublishingAnalysisId(null)} className="flex-1 py-3.5 rounded-xl border border-white/10 text-[#C8C8C8] text-sm hover:bg-white/5 transition-colors font-semibold">
+                İptal
+              </button>
+              <button disabled={isPublishing} onClick={handlePublish} className="flex-[2] py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black font-extrabold text-sm hover:opacity-90 flex justify-center items-center shadow-lg shadow-[#D4AF37]/20 transition-all">
+                {isPublishing ? <LoaderCircle size={18} className="animate-spin" /> : 'Gönder ve Paylaş'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#0A0A0A] border border-[#D4AF37]/30 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl relative max-h-[90vh]">
+              <div className="absolute top-[-50%] right-[-10%] w-32 h-32 bg-[#D4AF37]/20 blur-[50px] rounded-full pointer-events-none" />
+              
+              <div className="p-6 border-b border-white/5 relative z-10 sticky top-0 bg-[#0A0A0A]/90 backdrop-blur-md">
+                <h3 className="text-xl font-serif text-[#F5F0E8] flex items-center gap-2">
+                  <Settings className="text-[#D4AF37]" size={20} />
+                  {t("settings_title")}
+                </h3>
+              </div>
+              
+              <div className="p-6 space-y-6 relative z-10 flex-1 overflow-y-auto hide-scrollbar">
+                 {/* Language */}
+                 <div className="space-y-3">
+                   <h4 className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">{t("settings_language")}</h4>
+                   <div className="flex gap-2">
+                      <button onClick={() => changeLanguage('tr')} className={`flex-1 py-3 rounded-xl border text-sm font-semibold transition-all ${locale === 'tr' ? 'bg-[#D4AF37] text-black border-[#D4AF37]' : 'bg-white/5 border-white/10 text-[#C8C8C8]'}`}>Türkçe</button>
+                      <button onClick={() => changeLanguage('en')} className={`flex-1 py-3 rounded-xl border text-sm font-semibold transition-all ${locale === 'en' ? 'bg-[#D4AF37] text-black border-[#D4AF37]' : 'bg-white/5 border-white/10 text-[#C8C8C8]'}`}>English</button>
+                   </div>
+                 </div>
+
+                 {/* Privacy */}
+                 <div className="space-y-3">
+                   <h4 className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">{t("settings_privacy")}</h4>
+                   <div className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${ghostMode ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50' : 'bg-white/5 border-white/10'}`} onClick={() => setGhostMode(!ghostMode)}>
+                      <div className="flex-1">
+                          <p className={`font-semibold text-sm ${ghostMode ? 'text-[#D4AF37]' : 'text-[#F5F0E8]'}`}>{t("settings_ghost_mode")}</p>
+                          <p className="text-[10px] text-[#C8C8C8]/80 mt-1 pr-4">{t("settings_ghost_desc")}</p>
+                      </div>
+                      <div className={`flex w-12 h-6 rounded-full p-1 transition-colors relative ${ghostMode ? 'bg-[#D4AF37]' : 'bg-white/10'}`}>
+                         <div className={`w-4 h-4 rounded-full bg-white transition-transform absolute ${ghostMode ? 'translate-x-[24px]' : 'translate-x-0'}`} />
+                      </div>
+                   </div>
+                 </div>
+
+                 {/* Public Profile */}
+                 <div className="space-y-3">
+                   <h4 className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">{t("settings_public_profile") || "Public Profile"}</h4>
+                   <div className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isPublic ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50' : 'bg-white/5 border-white/10'}`} onClick={() => setIsPublic(!isPublic)}>
+                      <div className="flex-1">
+                          <p className={`font-semibold text-sm ${isPublic ? 'text-[#D4AF37]' : 'text-[#F5F0E8]'}`}>{t("settings_public") || "Herkese Açık Profil"}</p>
+                          <p className="text-[10px] text-[#C8C8C8]/80 mt-1 pr-4">{t("settings_public_desc") || "Kombinlerinizin diğer kullanıcılar tarafından görülmesine ve oylanmasına izin verin."}</p>
+                      </div>
+                      <div className={`flex w-12 h-6 rounded-full p-1 transition-colors relative ${isPublic ? 'bg-[#D4AF37]' : 'bg-white/10'}`}>
+                         <div className={`w-4 h-4 rounded-full bg-white transition-transform absolute ${isPublic ? 'translate-x-[24px]' : 'translate-x-0'}`} />
+                      </div>
+                   </div>
+                 </div>
+
+                 {/* Fit Preference */}
+                 <div className="space-y-3">
+                   <h4 className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">{t("settings_fit")}</h4>
+                   <div className="grid grid-cols-1 gap-2">
+                       {[
+                         { id: 'slim', label: t("fit_slim") },
+                         { id: 'regular', label: t("fit_regular") },
+                         { id: 'oversized', label: t("fit_oversized") }
+                       ].map(fit => (
+                          <button key={fit.id} onClick={() => setFitPref(fit.id)} className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all text-left ${fitPref === fit.id ? 'bg-[#D4AF37] text-black border-[#D4AF37]' : 'bg-white/5 border-white/10 text-[#C8C8C8]'}`}>
+                             {fit.label}
+                          </button>
+                       ))}
+                   </div>
+                 </div>
+                 
+                 {/* Logout */}
+                 <div className="pt-4 border-t border-white/5">
+                    <button onClick={handleLogout} className="w-full py-4 rounded-xl bg-[#ff4b4b]/10 border border-[#ff4b4b]/30 text-[#ff4b4b] hover:bg-[#ff4b4b]/20 transition-colors flex items-center justify-center gap-2 font-bold text-sm">
+                       <LogOut size={18} />
+                       {t("logout")}
+                    </button>
+                 </div>
+              </div>
+              
+              <div className="p-6 border-t border-white/5 flex gap-3 relative z-10 bg-black/40 sticky bottom-0">
+                 <button onClick={() => setShowSettings(false)} className="flex-1 py-3 px-4 rounded-xl border border-white/10 text-[#C8C8C8] hover:bg-white/5 transition-colors text-sm font-medium">
+                   {t("cancel")}
+                 </button>
+                 <button onClick={saveSettings} className="flex-[2] py-3 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-black hover:opacity-90 font-bold text-sm shadow-[#D4AF37]/20 shadow-lg">
+                   {t("settings_save")}
+                 </button>
+              </div>
           </div>
         </div>
       )}

@@ -39,6 +39,13 @@ export default function UploadPage() {
     }
   }, [searchParams, router, locale]);
 
+  useEffect(() => {
+    const typeParam = searchParams?.get("type");
+    if (typeParam === 'grooming' || typeParam === 'outfit') {
+      setAnalysisType(typeParam);
+    }
+  }, [searchParams]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
